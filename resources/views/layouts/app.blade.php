@@ -314,6 +314,219 @@
             transform: translateY(0);
         }
 
+        .order-success-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(47, 53, 66, 0.48);
+            backdrop-filter: blur(3px);
+        }
+
+        .order-success-overlay.active {
+            display: flex;
+            animation: orderSuccessFadeIn 0.18s ease-out;
+        }
+
+        .order-success-modal {
+            width: min(440px, 100%);
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 18px 50px rgba(47, 53, 66, 0.25);
+            border: 1px solid #ffe8d6;
+            text-align: center;
+            overflow: hidden;
+            animation: orderSuccessPop 0.24s ease-out;
+        }
+
+        .order-success-body {
+            padding: 28px 30px 24px;
+        }
+
+        .order-success-icon {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #eafaf1;
+            color: #27ae60;
+            font-size: 34px;
+            border: 7px solid #f4fbf7;
+        }
+
+        .order-success-modal h2 {
+            margin: 0 0 8px;
+            color: #2f3542;
+            font-size: 22px;
+        }
+
+        .order-success-modal p {
+            margin: 0;
+            color: #747d8c;
+            line-height: 1.55;
+        }
+
+        .order-success-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            margin-top: 18px;
+            background: #fff5f2;
+            border: 1px solid #ffe8d6;
+            border-radius: 10px;
+        }
+
+        .order-success-summary div {
+            padding: 12px 8px;
+        }
+
+        .order-success-summary div + div {
+            border-left: 1px solid #ffe8d6;
+        }
+
+        .order-success-summary small {
+            display: block;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .order-success-summary strong {
+            color: #e74c3c;
+            font-size: 16px;
+        }
+
+        .order-success-actions {
+            display: grid;
+            grid-template-columns: 1fr 1.35fr;
+            gap: 10px;
+            margin-top: 22px;
+        }
+
+        .order-success-actions a,
+        .order-success-actions button {
+            min-height: 44px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .order-success-actions a {
+            color: #555;
+            border: 1px solid #ddd;
+            background: #fff;
+        }
+
+        .order-success-actions button {
+            border: 0;
+            color: #fff;
+            background: linear-gradient(135deg, #e74c3c, #ff9f43);
+            box-shadow: 0 5px 12px rgba(231, 76, 60, 0.24);
+        }
+
+        @keyframes orderSuccessFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes orderSuccessPop {
+            from { opacity: 0; transform: translateY(14px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .site-toast {
+            position: fixed;
+            top: 88px;
+            right: 24px;
+            z-index: 4000;
+            width: min(390px, calc(100vw - 40px));
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 15px 16px;
+            background: #fff;
+            border: 1px solid #ffe3d5;
+            border-left: 4px solid #27ae60;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(47, 53, 66, 0.16);
+            color: #2f3542;
+            opacity: 0;
+            transform: translateX(24px);
+            pointer-events: none;
+            transition: opacity 0.22s ease, transform 0.22s ease;
+        }
+
+        .site-toast.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+        }
+
+        .site-toast.error {
+            border-left-color: #e74c3c;
+        }
+
+        .site-toast.info {
+            border-left-color: #ff9f43;
+        }
+
+        .site-toast-icon {
+            width: 34px;
+            height: 34px;
+            flex: 0 0 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #eafaf1;
+            color: #27ae60;
+        }
+
+        .site-toast.error .site-toast-icon {
+            background: #fdecea;
+            color: #e74c3c;
+        }
+
+        .site-toast.info .site-toast-icon {
+            background: #fff4e7;
+            color: #ff9f43;
+        }
+
+        .site-toast-content {
+            flex: 1;
+            padding-top: 1px;
+        }
+
+        .site-toast-content strong {
+            display: block;
+            margin-bottom: 3px;
+            font-size: 14px;
+        }
+
+        .site-toast-content span {
+            display: block;
+            color: #747d8c;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .site-toast-close {
+            border: 0;
+            background: transparent;
+            color: #b2b2b2;
+            cursor: pointer;
+            padding: 2px;
+        }
+
         .address-modal-header {
             display: flex;
             justify-content: space-between;
@@ -511,6 +724,7 @@
             color: #bbb;
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
 </head>
 <body>
 
@@ -529,7 +743,7 @@
 
         // Xử lý phân quyền từ Session Laravel
         $currentController = Request()->route()->getActionname(); // Hoặc lấy tên controller hiện tại
-        $currentRole = session('user_role', ''); // Role từ MySQL: 1 (Admin/Staff), 0 (Customer)
+        $currentRole = session('user_role', ''); // Role từ MySQL: 0 (Customer), 1 (Admin), 2 (Staff)
 
         $isAdminArea = ($currentRole == 1);
         $hideSidebar = $isAdminArea; // Tùy chỉnh ẩn hiện sidebar theo ý bạn
@@ -638,13 +852,13 @@
 
     <div class="wrapper">
         @if ($isAdminArea)
-            @include('layouts.sidebar-admin')
+            @include('layouts.sidebar_admin')
         @else
             @include('layouts.sidebar')
         @endif
 
         <!-- NỘI DUNG CHÍNH -->
-        <main class="main-content" id="appContent">
+        <main class="main-content {{ $isAdminArea ? 'admin-main-content' : '' }}" id="appContent">
             @yield('content')
         </main>
     </div>
@@ -666,6 +880,39 @@
         </div>
     @endif
 
+    @if (session()->has('order_success'))
+        @php $orderSuccess = session('order_success'); @endphp
+        <div class="order-success-overlay" id="orderSuccessModal" role="dialog" aria-modal="true" aria-labelledby="orderSuccessTitle">
+            <div class="order-success-modal">
+                <div class="order-success-body">
+                    <div class="order-success-icon">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <h2 id="orderSuccessTitle">Đặt hàng thành công!</h2>
+                    <p>Đơn hàng của bạn đã được tiếp nhận.<br>Hãy theo dõi trạng thái giao hàng trong mục đơn hàng.</p>
+
+                    <div class="order-success-summary">
+                        <div>
+                            <small>Mã đơn hàng</small>
+                            <strong>{{ $orderSuccess['code'] }}</strong>
+                        </div>
+                        <div>
+                            <small>Tổng thanh toán</small>
+                            <strong>{{ $orderSuccess['total'] }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="order-success-actions">
+                        <button type="button" onclick="window.location.href='{{ url('/foods') }}'">Tiếp tục mua</button>
+                        <a href="{{ route('customer.orders.index') }}">
+                            Xem đơn hàng <i class="fa-solid fa-arrow-right" style="margin-left:7px;"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- FOOTER -->
     <footer class="footer">
         <p><strong>FASTFOOD DELIVERY SYSTEM</strong> - Đồ án Quản lý dịch vụ giao thức ăn nhanh</p>
@@ -675,6 +922,44 @@
 
     <!-- SCRIPT XỬ LÝ GIAO DIỆN -->
     <script>
+        function showSiteToast(message, type = 'success') {
+            const existingToast = document.querySelector('.site-toast');
+            if (existingToast) existingToast.remove();
+
+            const toast = document.createElement('div');
+            toast.className = `site-toast ${type === 'error' ? 'error' : (type === 'info' ? 'info' : '')}`;
+
+            const icon = type === 'error'
+                ? 'fa-circle-exclamation'
+                : (type === 'info' ? 'fa-circle-info' : 'fa-check');
+            const title = type === 'error'
+                ? 'Không thể thêm món'
+                : (type === 'info' ? 'Thông báo' : 'Thành công');
+
+            toast.innerHTML = `
+                <div class="site-toast-icon"><i class="fa-solid ${icon}"></i></div>
+                <div class="site-toast-content">
+                    <strong>${title}</strong>
+                    <span></span>
+                </div>
+                <button type="button" class="site-toast-close" aria-label="Đóng thông báo">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+            toast.querySelector('.site-toast-content span').textContent = message;
+            document.body.appendChild(toast);
+
+            requestAnimationFrame(() => toast.classList.add('active'));
+
+            const removeToast = () => {
+                toast.classList.remove('active');
+                setTimeout(() => toast.remove(), 220);
+            };
+
+            toast.querySelector('.site-toast-close').addEventListener('click', removeToast);
+            toast._hideTimer = setTimeout(removeToast, 3500);
+        }
+
         function checkCustomerPermission(event, targetUrl) {
             event.preventDefault();
             var isAdmin = @json($isAdminArea);
@@ -728,6 +1013,24 @@
             let modal = document.getElementById("addressModal");
             if (modal) modal.classList.remove("active");
         }
+
+        function closeOrderSuccessModal() {
+            let modal = document.getElementById("orderSuccessModal");
+            if (modal) modal.classList.remove("active");
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            let orderSuccessModal = document.getElementById("orderSuccessModal");
+            if (orderSuccessModal) {
+                orderSuccessModal.classList.add("active");
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeOrderSuccessModal();
+            }
+        });
 
         function saveNewAddress() {
             let input = document.getElementById("addressInput");

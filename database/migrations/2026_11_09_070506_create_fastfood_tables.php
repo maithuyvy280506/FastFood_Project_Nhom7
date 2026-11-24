@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        // 1. Bảng users 
+        // 1. Bảng users
         Schema::create('users', function (Blueprint $table) {
             $table->id('id_user');
             $table->string('name');
@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('phone')->nullable();
             $table->text('address')->nullable();
-            $table->tinyInteger('role')->default(0); // 0: Khách hàng, 1: Admin
+            $table->tinyInteger('role')->default(0); // 0: Khách hàng, 1: Admin, 2: Nhân viên
             $table->tinyInteger('status')->default(1); // 1: Active, 0: Locked/Inactive
             $table->json('saved_vouchers')->nullable(); // Lưu mã voucher khách đã lưu
             $table->timestamps();

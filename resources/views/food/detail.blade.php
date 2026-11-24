@@ -40,6 +40,11 @@
                     {{ number_format($food->price, 0, ',', '.') }}đ
                 </div>
 
+                <label for="foodQuantity" style="display:block;margin-bottom:12px;font-size:13px;font-weight:bold;color:#444;">
+                    Số lượng
+                    <input id="foodQuantity" type="number" value="1" min="1" max="99" style="display:block;width:90px;margin-top:6px;padding:7px;border:1px solid #ddd;border-radius:6px;">
+                </label>
+
                 <!-- Các biến thể / Topping nếu có -->
                 @if (!empty($variants) && is_array($variants) && count($variants) > 0)
                     <div style="margin-bottom: 12px; border-top: 1px dashed #eee; padding-top: 10px;">
@@ -78,7 +83,7 @@
                 <a href="{{ url('/foods') }}" style="flex: 1; text-align: center; padding: 10px; border: 1px solid #ddd; border-radius: 6px; color: #555; text-decoration: none; font-weight: bold; font-size: 13px; transition: background 0.2s;" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='transparent'">
                     <i class="fa-solid fa-arrow-left" style="margin-right: 4px;"></i> Quay lại
                 </a>
-                <button onclick="submitAddToCart('{{ $food->id_product }}')" style="flex: 2; background: linear-gradient(135deg, #e74c3c, #ff9f43); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; box-shadow: 0 3px 8px rgba(231,76,60,0.3); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                <button id="addToCartButton" type="button" onclick="submitAddToCart('{{ $food->id_product }}')" style="flex: 2; background: linear-gradient(135deg, #e74c3c, #ff9f43); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; box-shadow: 0 3px 8px rgba(231,76,60,0.3); transition: opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
                     <i class="fa-solid fa-cart-shopping" style="margin-right: 5px;"></i> Thêm vào giỏ hàng
                 </button>
             </div>
@@ -91,8 +96,8 @@
         var isLoggedIn = @json(session('user_email') || session('user_name') ? 'true' : 'false');
 
         if (isLoggedIn === "false") {
-            alert("Vui lòng đăng nhập để thêm món vào giỏ hàng!");
-            window.location.href = "{{ url('/login') }}";
+            showSiteToast("Vui lòng đăng nhập để thêm món vào giỏ hàng!", 'info');
+            setTimeout(() => window.location.href = "{{ url('/login') }}", 1200);
             return;
         }
 
@@ -101,44 +106,51 @@
             selectedVariants.push(checkbox.value);
         });
 
-        let note = document.getElementById('foodNote').value.trim();
-        if (note !== "") {
-            selectedVariants.push("Ghi chú: " + note);
+        const note = document.getElementById('foodNote').value.trim();
+        const quantity = Number.parseInt(document.getElementById('foodQuantity').value, 10);
+        const button = document.getElementById('addToCartButton');
+
+        if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99) {
+            showSiteToast("Số lượng phải từ 1 đến 99", 'error');
+            return;
         }
 
-        fetch('/cart/add', {
+        button.disabled = true;
+        fetch('{{ route('cart.add') }}', {
             method: 'POST',
             headers: {
+                'Accept': 'application/json',
                 'Content-Type': 'application/json; charset=utf-8',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
             },
             body: JSON.stringify({
                 food_id: foodId,
-                quantity: 1,
-                variants: selectedVariants
+                quantity: quantity,
+                variants_selected: selectedVariants,
+                note: note
             })
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(data.message);
+        .then(async response => {
+            const data = await response.json();
 
-                let cartCountElement = document.getElementById('cart-count');
-                if (cartCountElement) {
-                    cartCountElement.innerText = data.totalCount;
-                }
-
-                let badgeElem = document.getElementById('cartCountBadge');
-                if (badgeElem) {
-                    badgeElem.innerText = data.totalCount;
-                }
-            } else {
-                alert(data.message);
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Không thể thêm món vào giỏ hàng');
             }
+
+            showSiteToast(data.message);
+            ['cart-count', 'cartCountBadge'].forEach(id => {
+                const badge = document.getElementById(id);
+                if (badge) {
+                    badge.innerText = data.totalCount;
+                }
+            });
         })
         .catch(error => {
-            console.log("Error:", error);
-            alert("Đã xảy ra lỗi kết nối với server!");
+            console.error('Unable to add product to cart:', error);
+            showSiteToast(error.message || "Đã xảy ra lỗi kết nối với server!", 'error');
+        })
+        .finally(() => {
+            button.disabled = false;
         });
     }
 </script>
