@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB; 
+use Illuminate\Support\Facades\DB;
 
 class FoodController extends Controller
 {
@@ -14,17 +14,18 @@ class FoodController extends Controller
 
         // 2. Lọc theo danh mục (Category)
         if ($request->has('category') && $request->category != '') {
-            $query->where('id_category', $request->category); 
+            $query->where('id_category', $request->category);
         }
 
         // 3. Tìm kiếm gần đúng (Search)
         if ($request->has('search') && $request->search != '') {
             $keyword = $request->search;
-            $query->where('name', 'like', '%' . $keyword . '%'); 
+            $query->where('name', 'like', '%'.$keyword.'%');
         }
 
         // 4. Thực thi truy vấn lấy dữ liệu
         $foods = $query->get();
+
         return view('food.index', compact('foods'));
     }
 
@@ -32,7 +33,7 @@ class FoodController extends Controller
     {
         $food = DB::table('products')->where('id_product', $id)->first();
 
-        if (!$food) {
+        if (! $food) {
             abort(404, 'Không tìm thấy món ăn');
         }
 

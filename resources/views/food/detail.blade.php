@@ -91,8 +91,8 @@
         var isLoggedIn = @json(session('user_email') || session('user_name') ? 'true' : 'false');
 
         if (isLoggedIn === "false") {
-            alert("Vui lòng đăng nhập để thêm món vào giỏ hàng!");
-            window.location.href = "{{ url('/login') }}";
+            showSiteToast("Vui lòng đăng nhập để thêm món vào giỏ hàng!", 'info');
+            setTimeout(() => window.location.href = "{{ url('/login') }}", 1200);
             return;
         }
 
@@ -121,7 +121,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert(data.message);
+                showSiteToast(data.message);
 
                 let cartCountElement = document.getElementById('cart-count');
                 if (cartCountElement) {
@@ -133,12 +133,12 @@
                     badgeElem.innerText = data.totalCount;
                 }
             } else {
-                alert(data.message);
+                showSiteToast(data.message, 'error');
             }
         })
         .catch(error => {
             console.log("Error:", error);
-            alert("Đã xảy ra lỗi kết nối với server!");
+            showSiteToast("Đã xảy ra lỗi kết nối với server!", 'error');
         });
     }
 </script>

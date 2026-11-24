@@ -19,19 +19,19 @@ class AuthController extends Controller
     {
         $request->validate([
             'Username' => 'required',
-            'Password' => 'required|min:6' // Đảm bảo mật khẩu đăng nhập ít nhất 6 ký tự
+            'Password' => 'required|min:6', // Đảm bảo mật khẩu đăng nhập ít nhất 6 ký tự
         ], [
-            'Password.min' => 'Mật khẩu phải có ít nhất 6 ký tự.'
+            'Password.min' => 'Mật khẩu phải có ít nhất 6 ký tự.',
         ]);
 
         $email = trim($request->Username);
-        
+
         // Tìm user trong DB theo email
         $user = DB::table('users')->where('email', $email)->first();
 
         if ($user) {
             // Kiểm tra mật khẩu (Sử dụng Hash thay vì so sánh chuỗi thô)
-            if (!Hash::check($request->Password, $user->password)) {
+            if (! Hash::check($request->Password, $user->password)) {
                 return back()->with('error', 'Mật khẩu không đúng.');
             }
 
@@ -45,14 +45,14 @@ class AuthController extends Controller
                 'user_id' => $user->id_user,
                 'user_name' => $user->name,
                 'user_email' => $user->email,
-                'user_phone' => $user->phone,      
-                'user_address' => $user->address,   
-                'user_role' => $user->role, // 1: Admin, 0: Customer
+                'user_phone' => $user->phone,
+                'user_address' => $user->address,
+                'user_role' => $user->role, // 0: Customer, 1: Admin, 2: Staff
             ]);
 
             // Phân quyền chuyển hướng
             if ($user->role == 1) {
-                return redirect('/admin'); 
+                return redirect()->route('admin.dashboard');
             }
 
             return redirect('/foods');
@@ -127,6 +127,7 @@ class AuthController extends Controller
     public function logout()
     {
         session()->flush();
+
         return redirect('/login');
     }
 }
