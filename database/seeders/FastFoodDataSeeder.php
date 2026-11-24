@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
 
 class FastFoodDataSeeder extends Seeder
 {
@@ -22,7 +22,7 @@ class FastFoodDataSeeder extends Seeder
                 'password' => Hash::make($user['password']),
                 'phone' => $user['sdt'] ?? null,
                 'address' => null,
-                'role' => 1,
+                'role' => 2,
                 'status' => ($user['status'] == 'Active') ? 1 : 0,
                 'created_at' => Carbon::parse($user['createdAt']),
                 'updated_at' => Carbon::parse($user['createdAt']),
@@ -103,8 +103,8 @@ class FastFoodDataSeeder extends Seeder
                 'code' => $promo['promotionId'],
                 'name' => $promo['name'],
                 'type' => $type,
-                'value' => (int)$val,
-                'min_order_value' => (int)$minOrder,
+                'value' => (int) $val,
+                'min_order_value' => (int) $minOrder,
                 'quantity' => $promo['quantity'],
                 'used' => 0,
                 'start_date' => Carbon::parse($promo['validityPeriod']['start']['$date']),
@@ -140,12 +140,21 @@ class FastFoodDataSeeder extends Seeder
 
             // Trạng thái đơn hàng (ví dụ: 'Đã giao' -> 1, 'Đã hủy' -> 2, mặc định chờ xác nhận -> 0)
             $status = 0;
-            if ($order['status'] === 'Đã giao' || $order['status'] === 'Hoàn thành') $status = 1;
-            elseif ($order['status'] === 'Đã hủy') $status = 2;
+            if ($order['status'] === 'Đang chuẩn bị') {
+                $status = 1;
+            } elseif ($order['status'] === 'Đang giao') {
+                $status = 2;
+            } elseif ($order['status'] === 'Đã giao' || $order['status'] === 'Hoàn thành') {
+                $status = 3;
+            } elseif ($order['status'] === 'Đã hủy') {
+                $status = 4;
+            }
 
             // Phương thức thanh toán (ví dụ: COD -> 1, Chuyển khoản -> 2)
             $method = 1;
-            if (isset($order['paymentMethod']) && $order['paymentMethod'] === 'Chuyển khoản') $method = 2;
+            if (isset($order['paymentMethod']) && $order['paymentMethod'] === 'Chuyển khoản') {
+                $method = 2;
+            }
 
             // Insert vào bảng orders
             $orderId = DB::table('orders')->insertGetId([
@@ -154,20 +163,22 @@ class FastFoodDataSeeder extends Seeder
                 'customer_phone' => $order['receiverPhone'] ?? '0123456789',
                 'customer_address' => is_array($order['deliveryAddress']) ? ($order['deliveryAddress']['address'] ?? 'TP.HCM') : 'TP.HCM',
                 'id_promotion' => null,
-                'discount_amount' => (int)$discountAmount,
-                'total_price' => (int)$totalAmount,
+                'discount_amount' => (int) $discountAmount,
+                'total_price' => (int) $totalAmount,
                 'note' => $order['note'] ?? null,
-                'shipping_fee' => (int)$shippingFee,
+                'shipping_fee' => (int) $shippingFee,
                 'status' => $status,
                 'method' => $method,
+                'created_at' => isset($order['createdAt']) ? Carbon::parse($order['createdAt']) : Carbon::now(),
+                'updated_at' => isset($order['updatedAt']) ? Carbon::parse($order['updatedAt']) : Carbon::now(),
             ]);
 
             // Duyệt mảng items trong đơn hàng để đưa vào order_details
             if (isset($order['items']) && is_array($order['items'])) {
                 foreach ($order['items'] as $item) {
                     // Lấy id_product dựa theo tên sản phẩm hoặc mặc định 1
-                    $productId = DB::table('products')->where('name', 'like', '%' . ($item['foodName'] ?? '') . '%')->value('id_product');
-                    if (!$productId) {
+                    $productId = DB::table('products')->where('name', 'like', '%'.($item['foodName'] ?? '').'%')->value('id_product');
+                    if (! $productId) {
                         $productId = 1; // Fallback nếu không khớp tên
                     }
 
@@ -178,7 +189,7 @@ class FastFoodDataSeeder extends Seeder
                         'id_product' => $productId,
                         'quantity' => $item['quantity'],
                         'variants_selected' => isset($item['selectedVariants']) ? json_encode($item['selectedVariants'], JSON_UNESCAPED_UNICODE) : null,
-                        'price' => (int)$unitPrice,
+                        'price' => (int) $unitPrice,
                     ]);
                 }
             }

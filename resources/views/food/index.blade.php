@@ -371,7 +371,7 @@
 
     function checkAdminAndGoToCart(cartUrl) {
         if (isAdminUser) {
-            alert("Vui lòng đăng nhập tài khoản khách hàng để thực hiện.");
+            showSiteToast("Vui lòng đăng nhập tài khoản khách hàng để thực hiện.", 'info');
             return;
         }
         window.location.href = cartUrl;
@@ -393,7 +393,7 @@
     // Thêm món ăn nhanh vào giỏ hàng qua AJAX
     $(document).on('click', '.btn-add-quick', function () {
         if (isAdminUser) {
-            alert("Vui lòng đăng nhập tài khoản khách hàng để thực hiện.");
+            showSiteToast("Vui lòng đăng nhập tài khoản khách hàng để thực hiện.", 'info');
             return;
         }
 
@@ -410,13 +410,13 @@
             success: function (res) {
                 if (res.success) {
                     $('#cartCountBadge').text(res.totalCount);
-                    alert(res.message);
+                    showSiteToast(res.message);
                 } else {
-                    alert(res.message);
+                    showSiteToast(res.message, 'error');
                 }
             },
             error: function () {
-                alert("Có lỗi xảy ra khi thêm vào giỏ hàng!");
+                showSiteToast("Có lỗi xảy ra khi thêm vào giỏ hàng!", 'error');
             }
         });
     });

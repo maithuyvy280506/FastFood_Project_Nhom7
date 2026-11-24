@@ -8,7 +8,7 @@
     <div class="sidebar-section-title">TỔNG QUAN</div>
     <ul class="sidebar-menu">
         <li>
-            <a href="{{ url('/admin/dashboard') }}" class="{{ request()->is('admin/dashboard*') ? 'active' : '' }}">
+            <a href="{{ route('admin.dashboard') }}" class="{{ request()->is('admin/dashboard*') ? 'active' : '' }}">
                 <i class="fa-solid fa-users"></i>
                 <span>Quản lý cửa hàng</span>
             </a>
@@ -19,7 +19,7 @@
     <div class="sidebar-section-title">QUẢN LÝ HỆ THỐNG</div>
     <ul class="sidebar-menu">
         <li>
-            <a href="{{ url('/admin/customers') }}" class="{{ request()->is('admin/customers*') ? 'active' : '' }}">
+            <a href="{{ route('admin.customers.index') }}" class="{{ request()->is('admin/customers*') ? 'active' : '' }}">
                 <i class="fa-solid fa-users"></i>
                 <span>Quản lý khách hàng</span>
             </a>
@@ -27,7 +27,7 @@
 
         @if ($isAdmin)
             <li>
-                <a href="{{ url('/admin/users') }}" class="{{ request()->is('admin/users*') ? 'active' : '' }}">
+                <a href="{{ route('admin.users.index') }}" class="{{ request()->is('admin/users*') ? 'active' : '' }}">
                     <i class="fa-solid fa-user-shield"></i>
                     <span>Quản lý nhân viên</span>
                 </a>
@@ -41,7 +41,7 @@
             </a>
         </li>
         <li>
-            <a href="{{ url('/admin/orders') }}" class="{{ request()->is('admin/orders*') ? 'active' : '' }}">
+            <a href="{{ route('admin.orders.index') }}" class="{{ request()->is('admin/orders*') ? 'active' : '' }}">
                 <i class="fa-solid fa-receipt"></i>
                 <span>Quản lý đơn hàng</span>
             </a>
