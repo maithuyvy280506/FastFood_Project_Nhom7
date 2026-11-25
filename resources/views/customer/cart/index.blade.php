@@ -1,674 +1,816 @@
-@extends('layouts.app')
 
+@extends('layouts.app')
 @section('content')
-@php $title = 'Giỏ hàng'; @endphp
+
+@php
+    $title = 'Giỏ hàng';
+    $subtotal = $subtotal ?? $cartItems->sum(fn($item) => $item->product->price * $item->quantity);
+    $shippingFee = $shippingFee ?? 0;
+    $discountAmount = $discountAmount ?? 0;
+    $availablePromotions = $availablePromotions ?? [];
+    $selectedPromotion = $selectedPromotion ?? null;
+    $promotionError = $promotionError ?? null;
+    $total = max(0, $subtotal + $shippingFee - $discountAmount);
+
+    // Chuyển dữ liệu tùy chọn thành chuỗi hiển thị
+    $formatOptions = function ($value) use (&$formatOptions) {
+        if ($value === null || $value === '') {
+            return '';
+        }
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $formatOptions($decoded);
+            }
+            return trim($value);
+        }
+        if ($value instanceof \Illuminate\Support\Collection) {
+            $value = $value->all();
+        }
+        if (is_object($value)) {
+            $value = method_exists($value, 'toArray')
+                ? $value->toArray()
+                : (array) $value;
+        }
+        if (is_array($value)) {
+            foreach (['name', 'label', 'option_name', 'topping_name', 'value_name', 'option_value'] as $key) {
+                if (isset($value[$key]) && is_string($value[$key])) {
+                    return trim($value[$key]);
+                }
+            }
+            $results = [];
+            foreach ($value as $key => $option) {
+                if (in_array($key, [
+                    'id', 'id_option', 'id_topping', 'id_product',
+                    'id_cart', 'price', 'extra_price', 'quantity',
+                    'created_at', 'updated_at', 'pivot'
+                ], true)) {
+                    continue;
+                }
+                $text = $formatOptions($option);
+                if ($text !== '') {
+                    $results[] = $text;
+                }
+            }
+            return implode(', ', array_unique($results));
+        }
+        return is_numeric($value) ? (string) $value : '';
+    };
+
+    // Lấy nội dung đầu tiên có dữ liệu
+    $firstText = function (...$values) use ($formatOptions) {
+        foreach ($values as $value) {
+            $text = $formatOptions($value);
+            if ($text !== '') {
+                return $text;
+            }
+        }
+        return '';
+    };
+@endphp
 
 <style>
+    /* ==================== TRANG GIỎ HÀNG ==================== */
     .cart-page {
-        max-width: 1050px;
-        margin: 24px auto;
+        --primary: #e74c3c;
+        --primary-dark: #c0392b;
+        --border: #ffe0cc;
+        width: 100%;
+        max-width: 1150px;
+        min-width: 0;
+        margin: 20px auto;
         padding: 0 20px;
+        color: #333;
+        box-sizing: border-box;
+        container-type: inline-size;
+    }
+    .cart-page * {
+        box-sizing: border-box;
+    }
+    .cart-page form {
+        margin: 0;
+    }
+    .cart-page button,
+    .cart-page input,
+    .cart-page select {
+        font-family: inherit;
     }
 
-    .cart-layout {
+    /* ==================== TIÊU ĐỀ ==================== */
+    .cart-page .cart-title {
+        color: var(--primary);
+        font-size: 26px;
+        font-weight: 700;
+        margin: 0 0 6px;
+    }
+    .cart-page .cart-subtitle {
+        color: #888;
+        font-size: 13px;
+        margin: 0 0 18px;
+    }
+
+    /* ==================== BỐ CỤC ==================== */
+    .cart-page .cart-layout {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 320px;
+        grid-template-columns: minmax(0, 1fr) minmax(280px, 32%);
+        gap: 18px;
         align-items: start;
-        gap: 20px;
-        margin-top: 18px;
     }
-
-    .cart-item,
-    .cart-summary {
+    .cart-page .cart-card {
+        min-width: 0;
         background: #fff;
-        border: 1px solid #ffe8d6;
-        border-radius: 12px;
-        box-shadow: 0 4px 14px rgba(231, 76, 60, .06);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, .03);
     }
 
-    .cart-item {
+    /* ==================== DANH SÁCH MÓN ==================== */
+    .cart-page .cart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        gap: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    .cart-page .cart-header h3 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 700;
+    }
+    .cart-page .cart-item {
         display: flex;
         align-items: center;
         gap: 14px;
-        padding: 14px;
-        margin-bottom: 12px;
+        padding: 16px;
+        border-bottom: 1px solid #eee;
+        transition: background .2s;
+    }
+    .cart-page .cart-item:hover {
+        background: #fffdfb;
     }
 
-    .cart-item-image {
-        width: 84px;
-        height: 84px;
-        flex: 0 0 84px;
+    /* ==================== HÌNH ẢNH ==================== */
+    .cart-page .cart-image {
+        width: 78px;
+        height: 78px;
+        flex-shrink: 0;
+        border-radius: 10px;
+        background: #fff1e8;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: var(--primary);
+        font-size: 28px;
+    }
+    .cart-page .cart-image img {
+        width: 100%;
+        height: 100%;
         object-fit: cover;
-        border-radius: 9px;
     }
 
-    .cart-item-details {
+    /* ==================== THÔNG TIN MÓN ==================== */
+    .cart-page .cart-info {
         flex: 1;
         min-width: 0;
     }
-
-    .cart-item-price {
-        color: #e74c3c;
+    .cart-page .cart-name {
+        font-size: 16px;
         font-weight: 700;
-        margin-top: 5px;
+        line-height: 1.4;
+        margin: 0 0 5px;
+        color: #222;
+        overflow-wrap: anywhere;
+    }
+    .cart-page .cart-detail {
+        color: #808080;
+        font-size: 13px;
+        font-weight: 400;
+        line-height: 1.5;
+        margin: 3px 0;
+        overflow-wrap: anywhere;
+    }
+    .cart-page .cart-note {
+        white-space: pre-wrap;
+    }
+    .cart-page .cart-price {
+        color: var(--primary);
+        font-size: 14px;
+        font-weight: 600;
+        margin-top: 6px;
+    }
+    .cart-page .cart-item-total {
+        min-width: 75px;
+        text-align: right;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--primary);
+        white-space: nowrap;
     }
 
-    .cart-quantity-form,
-    .cart-quantity-control,
-    .cart-item-actions {
+    /* ==================== SỐ LƯỢNG ==================== */
+    .cart-page .quantity-control {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        margin-top: 7px;
+    }
+    .cart-page .quantity-control button {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border: none;
+        border-radius: 5px;
+        background: transparent;
+        color: #333;
+        cursor: pointer;
+        font-size: 17px;
+        font-weight: 500;
+    }
+    .cart-page .quantity-control button:hover {
+        background: #fff0e6;
+        color: var(--primary);
+    }
+    .cart-page .quantity-control button:disabled {
+        opacity: .3;
+        cursor: not-allowed;
+    }
+    .cart-page .quantity-control input {
+        width: 30px;
+        height: 28px;
+        padding: 0;
+        border: none;
+        outline: none;
+        background: transparent;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 500;
+        color: #222;
+    }
+
+    /* ==================== XÓA MÓN ==================== */
+    .cart-page .remove-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: none;
+        border-radius: 6px;
+        background: #fff0ed;
+        color: var(--primary);
+        font-size: 14px;
+        cursor: pointer;
+        transition: .2s;
+    }
+    .cart-page .remove-button:hover {
+        background: var(--primary);
+        color: #fff;
+    }
+    .cart-page .clear-button {
+        border: 1px solid #f5b7b1;
+        background: #fff;
+        color: var(--primary);
+        padding: 7px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: .2s;
+    }
+    .cart-page .clear-button:hover {
+        background: var(--primary);
+        color: #fff;
+        border-color: var(--primary);
+    }
+
+    /* ==================== TIẾP TỤC MUA HÀNG ==================== */
+    .cart-page .cart-footer {
+        padding: 14px;
+    }
+    .cart-page .continue-shopping {
+        color: var(--primary);
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .cart-page .continue-shopping:hover {
+        text-decoration: underline;
+    }
+
+    /* ==================== TÓM TẮT ĐƠN HÀNG ==================== */
+    .cart-page .order-summary {
+        padding: 17px;
+    }
+    .cart-page .order-summary h3 {
+        margin: 0 0 15px;
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    /* ==================== VOUCHER ==================== */
+    .cart-page .voucher-box {
+        background: #fff8f3;
+        padding: 12px;
+        border: 1px dashed #f4b9a0;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    .cart-page .voucher-title {
         display: flex;
         align-items: center;
         gap: 7px;
-    }
-
-    .cart-quantity-form {
-        margin-top: 9px;
-        flex-wrap: wrap;
-    }
-
-    .cart-quantity-control button,
-    .cart-quantity-control input,
-    .cart-update-button,
-    .cart-remove-button,
-    .promotion-open-button,
-    .checkout-button {
-        border-radius: 7px;
-        font: inherit;
-    }
-
-    .cart-quantity-control button {
-        width: 32px;
-        height: 32px;
-        border: 1px solid #ddd;
-        background: #fff;
-        cursor: pointer;
-    }
-
-    .cart-quantity-control input {
-        width: 54px;
-        height: 32px;
-        border: 1px solid #ddd;
-        text-align: center;
-    }
-
-    .cart-update-button {
-        padding: 7px 10px;
-        border: 1px solid #ddd;
-        background: #fff;
-        cursor: pointer;
-    }
-
-    .cart-remove-button {
-        padding: 8px 10px;
-        border: 0;
-        background: #fff0ed;
-        color: #c0392b;
-        cursor: pointer;
-    }
-
-    .cart-summary {
-        padding: 18px;
-    }
-
-    .cart-summary h2 {
-        margin: 0 0 14px;
-        font-size: 19px;
-    }
-
-    .cart-summary-line {
-        display: flex;
-        justify-content: space-between;
-        gap: 10px;
-        margin-top: 9px;
-    }
-
-    .cart-total {
-        padding-top: 12px;
-        margin-top: 12px;
-        border-top: 1px dashed #ddd;
-        color: #e74c3c;
-        font-size: 18px;
-        font-weight: 800;
-    }
-
-    .promotion-open-button,
-    .checkout-button {
-        display: block;
-        width: 100%;
-        padding: 11px 14px;
+        color: var(--primary);
+        font-size: 14px;
         font-weight: 700;
-        text-align: center;
-        cursor: pointer;
+        margin-bottom: 8px;
     }
-
-    .promotion-open-button {
-        margin-top: 14px;
-        border: 1px solid #e74c3c;
+    .cart-page .voucher-select {
+        width: 100%;
+        min-width: 0;
+        padding: 9px;
         background: #fff;
-        color: #e74c3c;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 13px;
+        margin-bottom: 8px;
+        outline: none;
     }
-
-    .checkout-button {
-        margin-top: 12px;
-        border: 0;
-        background: #e74c3c;
+    .cart-page .voucher-select:focus {
+        border-color: var(--primary);
+    }
+    .cart-page .voucher-button {
+        width: 100%;
+        border: 1px solid var(--primary);
+        border-radius: 6px;
+        padding: 8px;
+        background: #fff;
+        color: var(--primary);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: .2s;
+    }
+    .cart-page .voucher-button:hover {
+        background: var(--primary);
         color: #fff;
+    }
+    .cart-page .voucher-success {
+        font-size: 12px;
+        color: #198754;
+        margin-top: 8px;
+        line-height: 1.5;
+    }
+    .cart-page .voucher-error {
+        color: #c0392b;
+        font-size: 12px;
+        margin-top: 8px;
+    }
+    .cart-page .voucher-link {
+        display: block;
+        margin-top: 10px;
+        text-align: center;
+        color: var(--primary);
+        font-size: 12px;
         text-decoration: none;
     }
-
-    .cart-message {
-        padding: 11px 13px;
-        margin: 12px 0;
-        border-radius: 8px;
-        background: #eafaf1;
-        color: #196f3d;
+    .cart-page .voucher-link:hover {
+        text-decoration: underline;
     }
 
-    .cart-message.error {
-        background: #fdecea;
-        color: #922b21;
-    }
-
-    .promotion-modal {
-        position: fixed;
-        z-index: 2000;
-        inset: 0;
-        display: grid;
-        place-items: center;
-        padding: 18px;
-        background: rgba(30, 30, 30, .58);
-    }
-
-    .promotion-modal[hidden] {
-        display: none;
-    }
-
-    .promotion-dialog {
-        width: min(100%, 520px);
-        max-height: min(80vh, 680px);
-        overflow-y: auto;
-        padding: 20px;
-        border-radius: 14px;
-        background: #fff;
-        box-shadow: 0 16px 50px rgba(0, 0, 0, .24);
-    }
-
-    .promotion-dialog-header,
-    .promotion-option {
+    /* ==================== TÍNH TIỀN ==================== */
+    .cart-page .summary-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
+        gap: 10px;
+        margin: 10px 0;
+        font-size: 14px;
     }
-
-    .promotion-dialog-header {
-        margin-bottom: 14px;
-    }
-
-    .promotion-dialog-header h2 {
-        margin: 0;
-        color: #e74c3c;
-        font-size: 20px;
-    }
-
-    .promotion-close-button {
-        width: 34px;
-        height: 34px;
-        border: 0;
-        border-radius: 50%;
-        background: #f5f5f5;
-        font-size: 20px;
-        cursor: pointer;
-    }
-
-    .promotion-option {
-        padding: 12px;
-        margin-top: 9px;
-        border: 1px solid #ffe0cc;
-        border-radius: 9px;
-    }
-
-    .promotion-option button,
-    .promotion-clear-button {
-        flex: 0 0 auto;
-        padding: 8px 10px;
-        border: 0;
-        border-radius: 7px;
-        background: #e74c3c;
-        color: #fff;
-        font-weight: 700;
-        cursor: pointer;
-    }
-
-    .promotion-option button:disabled,
-    .cart-item button:disabled {
-        opacity: .55;
-        cursor: not-allowed;
-    }
-
-    .promotion-option small {
-        display: block;
-        margin-top: 4px;
+    .cart-page .summary-row span {
         color: #666;
     }
-
-    .promotion-clear-button {
-        width: 100%;
+    .cart-page .summary-row strong {
+        white-space: nowrap;
+    }
+    .cart-page .discount-row,
+    .cart-page .discount-row span {
+        color: #198754;
+    }
+    .cart-page .summary-total {
+        border-top: 1px dashed #ddd;
         margin-top: 14px;
-        border: 1px solid #ddd;
-        background: #fff;
-        color: #555;
+        padding-top: 14px;
+        font-size: 17px;
+        font-weight: 700;
+    }
+    .cart-page .summary-total strong {
+        color: var(--primary);
+        font-size: 21px;
     }
 
-    @media (max-width: 760px) {
-        .cart-layout {
+    /* ==================== THANH TOÁN ==================== */
+    .cart-page .checkout-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        border: none;
+        border-radius: 7px;
+        margin-top: 15px;
+        padding: 12px;
+        background: var(--primary);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: .2s;
+    }
+    .cart-page .checkout-button:hover {
+        background: var(--primary-dark);
+    }
+
+    /* ==================== THÔNG BÁO ==================== */
+    .cart-page .cart-message {
+        padding: 12px 15px;
+        background: #eafaf1;
+        color: #196f3d;
+        border-radius: 7px;
+        margin-bottom: 15px;
+        font-size: 13px;
+    }
+    .cart-page .cart-error {
+        padding: 12px 15px;
+        background: #fff0ed;
+        color: #c0392b;
+        border-radius: 7px;
+        margin-bottom: 15px;
+        font-size: 13px;
+    }
+
+    /* ==================== GIỎ HÀNG TRỐNG ==================== */
+    .cart-page .empty-cart {
+        text-align: center;
+        padding: 50px 20px;
+    }
+    .cart-page .empty-icon {
+        color: #f2b6a9;
+        font-size: 55px;
+        margin-bottom: 15px;
+    }
+    .cart-page .empty-cart h2 {
+        font-size: 21px;
+        margin: 0 0 10px;
+    }
+    .cart-page .empty-cart p {
+        color: #888;
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+    .cart-page .empty-cart a {
+        display: inline-block;
+        background: var(--primary);
+        color: #fff;
+        padding: 10px 22px;
+        border-radius: 7px;
+        font-size: 14px;
+        text-decoration: none;
+    }
+    .cart-page .empty-cart a:hover {
+        background: var(--primary-dark);
+    }
+
+    /* ==================== RESPONSIVE ==================== */
+    @container (max-width: 760px) {
+        .cart-page .cart-layout {
             grid-template-columns: 1fr;
         }
-
-        .cart-summary {
-            order: -1;
+    }
+    @container (max-width: 460px) {
+        .cart-page .cart-item {
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .cart-page .cart-image {
+            width: 62px;
+            height: 62px;
+        }
+        .cart-page .cart-name {
+            font-size: 14px;
+        }
+        .cart-page .cart-detail {
+            font-size: 12px;
+        }
+        .cart-page .cart-item-total {
+            margin-left: auto;
+        }
+        .cart-page .cart-header h3 {
+            font-size: 15px;
         }
     }
-
-    @media (max-width: 480px) {
+    @media (max-width: 600px) {
         .cart-page {
-            padding: 0 12px;
+            padding: 0 10px;
+            margin: 15px auto;
         }
-
-        .cart-item {
-            align-items: flex-start;
-            gap: 10px;
-            padding: 10px;
+        .cart-page .cart-title {
+            font-size: 23px;
         }
-
-        .cart-item-image {
-            width: 64px;
-            height: 64px;
-            flex-basis: 64px;
+        .cart-page .cart-layout {
+            grid-template-columns: 1fr;
         }
-
-        .cart-item-actions {
-            flex-direction: column;
+        .cart-page .order-summary {
+            padding: 14px;
         }
     }
 </style>
 
-<main
-    class="cart-page"
-    id="cartPage"
-    data-csrf-token="{{ csrf_token() }}"
-    data-apply-promotion-url="{{ route('cart.promotion.apply') }}"
->
-    <h1 style="color:#e74c3c;">Giỏ hàng</h1>
+<div class="cart-page">
+    {{-- ==================== TIÊU ĐỀ ==================== --}}
+    <h1 class="cart-title">GIỎ HÀNG CỦA BẠN</h1>
+    <p class="cart-subtitle">
+        Bạn có {{ $cartItems->sum('quantity') }} món ăn trong giỏ hàng
+    </p>
 
-    <div id="cartMessage" class="cart-message" role="status" aria-live="polite" hidden></div>
+    {{-- ==================== THÔNG BÁO ==================== --}}
     @if (session('success'))
-        <div class="cart-message">{{ session('success') }}</div>
+        <div class="cart-message">
+            <i class="fa-solid fa-circle-check"></i>
+            {{ session('success') }}
+        </div>
     @endif
     @if (session('error'))
-        <div class="cart-message error">{{ session('error') }}</div>
+        <div class="cart-error">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            {{ session('error') }}
+        </div>
+    @endif
+    @if ($errors->any())
+        <div class="cart-error">
+            @foreach ($errors->all() as $error)
+                <div>{{ $error }}</div>
+            @endforeach
+        </div>
     @endif
 
-    <div id="cartEmptyState" style="text-align:center;padding:50px;" @if ($cartItems->isNotEmpty()) hidden @endif>
-        Giỏ hàng trống
-        <div style="margin-top:12px;"><a href="{{ url('/foods') }}">Tiếp tục chọn món</a></div>
-    </div>
-
-    <section id="cartContent" @if ($cartItems->isEmpty()) hidden @endif>
+    {{-- ==================== GIỎ HÀNG TRỐNG ==================== --}}
+    @if ($cartItems->isEmpty())
+        <div class="cart-card empty-cart">
+            <div class="empty-icon">
+                <i class="fa-solid fa-cart-shopping"></i>
+            </div>
+            <h2>Giỏ hàng đang trống</h2>
+            <p>Hãy thêm những món ăn yêu thích vào giỏ hàng nhé!</p>
+            <a href="{{ url('/foods') }}">
+                <i class="fa-solid fa-utensils"></i>
+                Khám phá thực đơn
+            </a>
+        </div>
+    @else
         <div class="cart-layout">
-            <div id="cartItems">
+            {{-- ==================== DANH SÁCH MÓN ==================== --}}
+            <div class="cart-card">
+                <div class="cart-header">
+                    <h3>Danh sách món ăn</h3>
+                    <form method="POST"
+                          action="{{ route('cart.clear') }}"
+                          onsubmit="return confirm('Bạn có chắc muốn xóa tất cả món trong giỏ hàng?');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="clear-button">
+                            <i class="fa-solid fa-trash"></i>
+                            Xóa tất cả
+                        </button>
+                    </form>
+                </div>
+
                 @foreach ($cartItems as $item)
-                    <article
-                        class="cart-item"
-                        data-cart-item
-                        data-cart-id="{{ $item->id_cart }}"
-                    >
-                        <img class="cart-item-image" src="{{ $item->product->image }}" alt="{{ $item->product->name }}">
-                        <div class="cart-item-details">
-                            <strong>{{ $item->product->name }}</strong>
-                            @if (! empty($item->variants_selected))
-                                <div style="margin-top:4px;color:#777;font-size:12px;">
-                                    {{ implode(', ', $item->variants_selected) }}
+@php
+    $variants = $item->variants_selected ?? [];
+    if (is_string($variants)) {
+        $variants = json_decode($variants, true) ?? [$variants];
+    }
+    if ($variants instanceof \Illuminate\Support\Collection) {
+        $variants = $variants->toArray();
+    }
+    $variants = is_array($variants) ? $variants : [];
+    $toppingList = [];
+    $optionList = [];
+
+    // Phân loại topping và tùy chọn
+    foreach ($variants as $variant) {
+        $name = is_array($variant)
+            ? ($variant['name'] ?? '')
+            : $variant;
+        if (!is_string($name) || trim($name) === '') {
+            continue;
+        }
+        $name = trim($name);
+        $lowerName = mb_strtolower($name, 'UTF-8');
+        if (\Illuminate\Support\Str::contains($lowerName, [
+            'thêm', 'topping', 'trân châu', 'thạch'
+        ])) {
+            $toppingList[] = $name;
+        } else {
+            $optionList[] = $name;
+        }
+    }
+
+    $toppings = implode(', ', array_unique($toppingList));
+    $optionText = implode(', ', array_unique($optionList));
+    $note = $item->note ?? '';
+    $unitPrice = $item->product->price;
+    $itemTotal = $unitPrice * $item->quantity;
+                    @endphp
+
+                    <div class="cart-item">
+                        {{-- Hình ảnh món ăn --}}
+                        <div class="cart-image">
+                            @if (!empty($item->product->image))
+                                <img src="{{ asset($item->product->image) }}"
+                                     alt="{{ $item->product->name }}"
+                                     loading="lazy">
+                            @else
+                                <i class="fa-solid fa-burger"></i>
+                            @endif
+                        </div>
+
+                        {{-- Thông tin món ăn --}}
+                        <div class="cart-info">
+                            <div class="cart-name">
+                                {{ $item->product->name }}
+                            </div>
+                            @if (filled($toppings))
+                                <div class="cart-detail">
+                                    Topping: {{ $toppings }}
                                 </div>
                             @endif
-                            @if ($item->note)
-                                <div style="margin-top:4px;color:#777;font-size:12px;">Ghi chú: {{ $item->note }}</div>
+                            @if (filled($optionText))
+                                <div class="cart-detail">
+                                    Tùy chọn: {{ $optionText }}
+                                </div>
                             @endif
-                            <div class="cart-item-price">{{ number_format($item->product->price, 0, ',', '.') }}đ / món</div>
+                            @if (filled($note))
+                                <div class="cart-detail cart-note">Ghi chú: {{ $note }}</div>
+                            @endif
+                            <div class="cart-price">
+                                {{ number_format($unitPrice, 0, ',', '.') }}đ / món
+                            </div>
 
-                            <form
-                                method="POST"
-                                action="{{ route('cart.update', $item) }}"
-                                class="cart-quantity-form"
-                                data-cart-update-form
-                            >
+                            {{-- Cập nhật số lượng --}}
+                            <form method="POST"
+                                  action="{{ route('cart.update', $item->getKey()) }}"
+                                  class="quantity-control">
                                 @csrf
                                 @method('PATCH')
-                                <div class="cart-quantity-control">
-                                    <button type="button" data-quantity-step="-1" aria-label="Giảm số lượng">−</button>
-                                    <input
-                                        type="number"
+                                <button type="submit"
                                         name="quantity"
-                                        value="{{ $item->quantity }}"
-                                        min="1"
-                                        max="99"
-                                        required
-                                        data-quantity-field
-                                        aria-label="Số lượng {{ $item->product->name }}"
-                                    >
-                                    <button type="button" data-quantity-step="1" aria-label="Tăng số lượng">+</button>
-                                </div>
-                                <button class="cart-update-button" type="submit">Cập nhật</button>
-                            </form>
-                        </div>
-                        <div class="cart-item-actions">
-                            <strong data-line-total>{{ number_format($item->product->price * $item->quantity, 0, ',', '.') }}đ</strong>
-                            <form method="POST" action="{{ route('cart.destroy', $item) }}" data-cart-remove-form>
-                                @csrf
-                                @method('DELETE')
-                                <button class="cart-remove-button" type="submit" aria-label="Xóa {{ $item->product->name }} khỏi giỏ">
-                                    <i class="fa-solid fa-trash"></i>
+                                        value="{{ $item->quantity - 1 }}"
+                                        aria-label="Giảm số lượng"
+                                        @disabled($item->quantity <= 1)>
+                                    −
+                                </button>
+                                <input type="text"
+                                       value="{{ $item->quantity }}"
+                                       aria-label="Số lượng"
+                                       readonly>
+                                <button type="submit"
+                                        name="quantity"
+                                        value="{{ $item->quantity + 1 }}"
+                                        aria-label="Tăng số lượng">
+                                    +
                                 </button>
                             </form>
                         </div>
-                    </article>
+
+                        {{-- Thành tiền --}}
+                        <div class="cart-item-total">
+                            {{ number_format($itemTotal, 0, ',', '.') }}đ
+                        </div>
+
+                        {{-- Xóa từng món --}}
+                        <form method="POST"
+                              action="{{ route('cart.destroy', $item->getKey()) }}"
+                              onsubmit="return confirm('Bạn có muốn xóa món này khỏi giỏ hàng?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit"
+                                    class="remove-button"
+                                    title="Xóa món"
+                                    aria-label="Xóa món">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
                 @endforeach
+
+                {{-- Tiếp tục mua hàng --}}
+                <div class="cart-footer">
+                    <a href="{{ url('/foods') }}" class="continue-shopping">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        Tiếp tục mua hàng
+                    </a>
+                </div>
             </div>
 
-            <aside class="cart-summary" aria-label="Tóm tắt giỏ hàng">
-                <h2>Tóm tắt đơn hàng</h2>
-                <div class="cart-summary-line">
-                    <span>Tạm tính</span>
-                    <strong id="cartSubtotal">{{ number_format($subtotal, 0, ',', '.') }}đ</strong>
-                </div>
-                <div class="cart-summary-line">
-                    <span>Phí giao hàng dự kiến</span>
-                    <strong id="cartShipping">{{ number_format($shippingFee, 0, ',', '.') }}đ</strong>
-                </div>
-                <div class="cart-summary-line" style="color:#196f3d;">
-                    <span>Giảm giá</span>
-                    <strong id="cartDiscount">-{{ number_format($discountAmount, 0, ',', '.') }}đ</strong>
-                </div>
-                <div class="cart-summary-line cart-total">
-                    <span>Tổng dự kiến</span>
-                    <strong id="cartTotal">{{ number_format($total, 0, ',', '.') }}đ</strong>
+            {{-- ==================== TÓM TẮT ĐƠN HÀNG ==================== --}}
+            <aside class="cart-card order-summary">
+                <h3>Tóm tắt đơn hàng</h3>
+
+                {{-- Voucher --}}
+                <div class="voucher-box">
+                    <div class="voucher-title">
+                        <i class="fa-solid fa-ticket"></i>
+                        Voucher giảm giá
+                    </div>
+                    <form method="POST" action="{{ route('cart.promotion.apply') }}">
+                        @csrf
+                        <select name="promotion_id"
+                                class="voucher-select"
+                                aria-label="Chọn voucher">
+                            <option value="">Không sử dụng voucher</option>
+                            @foreach ($availablePromotions as $promotion)
+                                <option value="{{ $promotion->id_promotion }}"
+                                        @selected((string) old('promotion_id', $selectedPromotion?->id_promotion) === (string) $promotion->id_promotion)
+                                        @disabled($subtotal < $promotion->min_order_value)>
+                                    {{ $promotion->code }} - {{ $promotion->name }}
+                                    (Tối thiểu {{ number_format($promotion->min_order_value, 0, ',', '.') }}đ)
+                                </option>
+                            @endforeach
+                        </select>
+                        <button type="submit" class="voucher-button">
+                            Áp dụng voucher
+                        </button>
+                    </form>
+                    @if ($selectedPromotion && !$promotionError)
+                        <div class="voucher-success">
+                            <i class="fa-solid fa-circle-check"></i>
+                            Đã áp dụng voucher
+                            <strong>{{ $selectedPromotion->code }}</strong>
+                        </div>
+                    @endif
+                    @if ($promotionError)
+                        <div class="voucher-error">{{ $promotionError }}</div>
+                    @endif
+                    @error('promotion_id')
+                        <div class="voucher-error">{{ $message }}</div>
+                    @enderror
+                    <a href="{{ route('promotions.index') }}" class="voucher-link">
+                        <i class="fa-solid fa-tags"></i>
+                        Xem thêm voucher
+                    </a>
                 </div>
 
-                <div id="selectedPromotionSummary" style="margin-top:10px;color:#196f3d;" @if (! $selectedPromotion) hidden @endif>
-                    @if ($selectedPromotion)
-                        Đang chọn mã <strong id="selectedPromotionCode">{{ $selectedPromotion->code }}</strong>
+                {{-- Tạm tính --}}
+                <div class="summary-row">
+                    <span>Tạm tính</span>
+                    <strong>{{ number_format($subtotal, 0, ',', '.') }}đ</strong>
+                </div>
+
+                {{-- Phí giao hàng --}}
+                <div class="summary-row">
+                    <span>Phí giao hàng dự kiến</span>
+                    <strong>{{ number_format($shippingFee, 0, ',', '.') }}đ</strong>
+                </div>
+
+                {{-- Giảm giá --}}
+                <div class="summary-row discount-row">
+                    <span>
+                        Giảm giá
+                        @if ($selectedPromotion)
+                            ({{ $selectedPromotion->code }})
+                        @endif
+                    </span>
+                    <strong>
+                        {{ $discountAmount > 0 ? '-' : '' }}{{ number_format($discountAmount, 0, ',', '.') }}đ
+                    </strong>
+                </div>
+
+                {{-- Tổng tiền --}}
+                <div class="summary-row summary-total">
+                    Tổng dự kiến
+                    <strong>{{ number_format($total, 0, ',', '.') }}đ</strong>
+                </div>
+
+                {{-- Thanh toán --}}
+                <form method="GET" action="{{ route('cart.checkout') }}">
+                    @if ($selectedPromotion && !$promotionError)
+                        <input type="hidden"
+                               name="promotion_id"
+                               value="{{ $selectedPromotion->id_promotion }}">
                     @endif
-                </div>
-                <div id="cartPromotionMessage" style="margin-top:7px;color:#c0392b;font-size:13px;">
-                    {{ $promotionError }}
-                </div>
-                <button class="promotion-open-button" id="openPromotionModal" type="button">Chọn mã khuyến mãi</button>
-                <a
-                    class="checkout-button"
-                    id="checkoutButton"
-                    href="{{ route('cart.checkout') }}"
-                >
-                    Tiến hành đặt hàng
-                </a>
+                    <button type="submit" class="checkout-button">
+                        Tiến hành thanh toán
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </form>
             </aside>
         </div>
-    </section>
-</main>
-
-<div class="promotion-modal" id="promotionModal" role="presentation" aria-hidden="true" hidden>
-    <section class="promotion-dialog" role="dialog" aria-modal="true" aria-labelledby="promotionModalTitle" tabindex="-1">
-        <div class="promotion-dialog-header">
-            <h2 id="promotionModalTitle">Chọn mã khuyến mãi</h2>
-            <button type="button" class="promotion-close-button" data-close-promotion-modal aria-label="Đóng">×</button>
-        </div>
-
-        @forelse ($availablePromotions as $promotion)
-            <div class="promotion-option">
-                <div>
-                    <strong>{{ $promotion->code }} - {{ $promotion->name }}</strong>
-                    <small>Đơn tối thiểu {{ number_format($promotion->min_order_value, 0, ',', '.') }}đ</small>
-                </div>
-                <button
-                    type="button"
-                    data-apply-promotion="{{ $promotion->id_promotion }}"
-                    data-promotion-minimum="{{ $promotion->min_order_value }}"
-                    @disabled($subtotal < $promotion->min_order_value)
-                >
-                    @if ($selectedPromotion?->id_promotion === $promotion->id_promotion)
-                        Đang chọn
-                    @elseif ($subtotal < $promotion->min_order_value)
-                        Chưa đủ đơn
-                    @else
-                        Áp dụng
-                    @endif
-                </button>
-            </div>
-        @empty
-            <p style="color:#666;">Bạn chưa có mã khuyến mãi khả dụng.</p>
-            <a href="{{ route('promotions.index') }}">Đến Kho Voucher</a>
-        @endforelse
-
-        @if ($selectedPromotion)
-            <button class="promotion-clear-button" type="button" data-clear-promotion>Bỏ áp dụng mã</button>
-        @endif
-    </section>
+    @endif
 </div>
 
-<script>
-    (() => {
-        const page = document.getElementById('cartPage');
-        const modal = document.getElementById('promotionModal');
-        const message = document.getElementById('cartMessage');
-        const currency = new Intl.NumberFormat('vi-VN');
-        let currentSubtotal = {{ $subtotal }};
-
-        function formatMoney(amount) {
-            return `${currency.format(amount)}đ`;
-        }
-
-        function showMessage(text, isError = false) {
-            message.textContent = text;
-            message.classList.toggle('error', isError);
-            message.hidden = !text;
-        }
-
-        async function sendCartRequest(url, method, data = null) {
-            const options = {
-                method,
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': page.dataset.csrfToken
-                }
-            };
-
-            if (data !== null) {
-                options.body = JSON.stringify(data);
-            }
-
-            const response = await fetch(url, options);
-            let result;
-
-            try {
-                result = await response.json();
-            } catch {
-                throw new Error('Không thể đọc phản hồi từ máy chủ');
-            }
-
-            if (!response.ok || result.success === false) {
-                const validationMessage = result.errors
-                    ? Object.values(result.errors).flat()[0]
-                    : null;
-                throw new Error(result.message || validationMessage || 'Không thể cập nhật giỏ hàng');
-            }
-
-            return result;
-        }
-
-        function updateSummary(result) {
-            currentSubtotal = result.subtotal;
-            document.getElementById('cartSubtotal').textContent = formatMoney(result.subtotal);
-            document.getElementById('cartShipping').textContent = formatMoney(result.shippingFee);
-            document.getElementById('cartDiscount').textContent = `-${formatMoney(result.discountAmount)}`;
-            document.getElementById('cartTotal').textContent = formatMoney(result.total);
-
-            ['cart-count', 'cartCountBadge'].forEach(id => {
-                const badge = document.getElementById(id);
-                if (badge) {
-                    badge.textContent = result.cartCount;
-                }
-            });
-
-            const selectedSummary = document.getElementById('selectedPromotionSummary');
-            const selectedCode = document.getElementById('selectedPromotionCode');
-            selectedSummary.hidden = !result.selectedPromotionCode;
-            if (result.selectedPromotionCode) {
-                if (selectedCode) {
-                    selectedCode.textContent = result.selectedPromotionCode;
-                } else {
-                    selectedSummary.innerHTML = 'Đang chọn mã <strong id="selectedPromotionCode"></strong>';
-                    document.getElementById('selectedPromotionCode').textContent = result.selectedPromotionCode;
-                }
-            }
-
-            document.getElementById('cartPromotionMessage').textContent = result.promotionError || '';
-            modal.querySelectorAll('[data-apply-promotion]').forEach(button => {
-                const isSelected = Number(button.dataset.applyPromotion) === Number(result.selectedPromotionId);
-                button.disabled = result.subtotal < Number(button.dataset.promotionMinimum);
-                button.textContent = isSelected
-                    ? 'Đang chọn'
-                    : (button.disabled ? 'Chưa đủ đơn' : 'Áp dụng');
-            });
-            document.getElementById('cartContent').hidden = result.isEmpty;
-            document.getElementById('cartEmptyState').hidden = !result.isEmpty;
-        }
-
-        function openModal() {
-            modal.hidden = false;
-            modal.setAttribute('aria-hidden', 'false');
-            modal.querySelector('[data-close-promotion-modal]').focus();
-        }
-
-        function closeModal() {
-            modal.hidden = true;
-            modal.setAttribute('aria-hidden', 'true');
-            document.getElementById('openPromotionModal').focus();
-        }
-
-        async function updateQuantity(form, quantity) {
-            const buttonElements = form.querySelectorAll('button');
-            buttonElements.forEach(button => {
-                button.disabled = true;
-            });
-
-            try {
-                const result = await sendCartRequest(form.action, 'PATCH', { quantity });
-                form.querySelector('[data-quantity-field]').value = result.quantity;
-                form.closest('[data-cart-item]').querySelector('[data-line-total]').textContent = formatMoney(result.itemSubtotal);
-                updateSummary(result);
-                showMessage(result.promotionError || 'Đã cập nhật số lượng');
-            } catch (error) {
-                showMessage(error.message, true);
-            } finally {
-                buttonElements.forEach(button => {
-                    button.disabled = false;
-                });
-            }
-        }
-
-        async function removeItem(form) {
-            const button = form.querySelector('button');
-            button.disabled = true;
-
-            try {
-                const result = await sendCartRequest(form.action, 'DELETE');
-                form.closest('[data-cart-item]').remove();
-                updateSummary(result);
-                showMessage('Đã xóa món khỏi giỏ hàng');
-            } catch (error) {
-                button.disabled = false;
-                showMessage(error.message, true);
-            }
-        }
-
-        async function applyPromotion(promotionId) {
-            const buttons = modal.querySelectorAll('[data-apply-promotion], [data-clear-promotion]');
-            buttons.forEach(button => {
-                button.disabled = true;
-            });
-
-            try {
-                const result = await sendCartRequest(page.dataset.applyPromotionUrl, 'POST', {
-                    promotion_id: promotionId
-                });
-                updateSummary(result);
-                closeModal();
-                showMessage(result.selectedPromotionCode
-                    ? `Đã áp dụng mã ${result.selectedPromotionCode}`
-                    : 'Đã bỏ áp dụng voucher');
-            } catch (error) {
-                showMessage(error.message, true);
-            } finally {
-                buttons.forEach(button => {
-                    button.disabled = button.dataset.promotionMinimum
-                        ? currentSubtotal < Number(button.dataset.promotionMinimum)
-                        : false;
-                });
-            }
-        }
-
-        document.getElementById('openPromotionModal').addEventListener('click', openModal);
-        modal.addEventListener('click', event => {
-            if (event.target === modal || event.target.closest('[data-close-promotion-modal]')) {
-                closeModal();
-            }
-
-            const applyButton = event.target.closest('[data-apply-promotion]');
-            if (applyButton) {
-                applyPromotion(Number.parseInt(applyButton.dataset.applyPromotion, 10));
-            }
-
-            if (event.target.closest('[data-clear-promotion]')) {
-                applyPromotion(null);
-            }
-        });
-        document.addEventListener('keydown', event => {
-            if (event.key === 'Escape' && !modal.hidden) {
-                closeModal();
-            }
-        });
-
-        document.querySelectorAll('[data-cart-update-form]').forEach(form => {
-            form.addEventListener('submit', event => {
-                event.preventDefault();
-                updateQuantity(form, Number.parseInt(form.querySelector('[data-quantity-field]').value, 10));
-            });
-        });
-
-        document.querySelectorAll('[data-cart-remove-form]').forEach(form => {
-            form.addEventListener('submit', event => {
-                event.preventDefault();
-                removeItem(form);
-            });
-        });
-
-        document.addEventListener('click', event => {
-            const stepButton = event.target.closest('[data-quantity-step]');
-            if (!stepButton) {
-                return;
-            }
-
-            const form = stepButton.closest('[data-cart-update-form]');
-            const input = form.querySelector('[data-quantity-field]');
-            const currentQuantity = Number.parseInt(input.value, 10) || 1;
-            const step = Number.parseInt(stepButton.dataset.quantityStep, 10);
-            const nextQuantity = Math.min(99, Math.max(1, currentQuantity + step));
-
-            if (nextQuantity !== currentQuantity) {
-                input.value = nextQuantity;
-                updateQuantity(form, nextQuantity);
-            }
-        });
-    })();
-</script>
 @endsection

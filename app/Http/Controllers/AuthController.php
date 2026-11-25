@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -122,6 +122,61 @@ class AuthController extends Controller
 
         return back()->with('error', 'Email không tồn tại trong hệ thống.');
     }
+
+    public function updateAddress(Request $request)
+{
+    $request->merge([
+        'address' => trim((string) $request->input('address', ''))
+    ]);
+
+    $validated = $request->validate([
+        'address' => 'required|string|max:255',
+    ], [
+        'address.required' => 'Vui lòng nhập địa chỉ giao hàng.',
+        'address.max' => 'Địa chỉ không được vượt quá 255 ký tự.',
+    ]);
+
+    // Kiểm tra khách hàng đăng nhập
+    $userEmail = session('user_email');
+    if (!$userEmail) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Vui lòng đăng nhập.'
+        ], 401);
+    }
+
+    // Tìm khách hàng trong MySQL
+    $user = User::where('email', $userEmail)->first();
+    if (!$user) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Không tìm thấy tài khoản khách hàng.'
+        ], 404);
+    }
+
+    try {
+        // Lưu địa chỉ mới xuống MySQL
+        $user->address = $validated['address'];
+        $user->saveOrFail();
+
+        // Cập nhật lại Session
+        session([
+            'user_address' => $user->address
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật địa chỉ thành công!',
+            'address' => $user->address
+        ]);
+    } catch (\Throwable $e) {
+        report($e);
+        return response()->json([
+            'success' => false,
+            'message' => 'Không thể lưu địa chỉ vào cơ sở dữ liệu.'
+        ], 500);
+    }
+}
 
     // ĐĂNG XUẤT
     public function logout()
