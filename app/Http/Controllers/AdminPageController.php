@@ -25,6 +25,7 @@ class AdminPageController extends Controller
             ->limit(5)
             ->get()
             ->map(fn (Order $order): array => [
+                'id' => $order->id_order,
                 'code' => 'DH'.str_pad((string) $order->id_order, 3, '0', STR_PAD_LEFT),
                 'createdAt' => $order->created_at?->format('d/m H:i') ?? '',
             ])
@@ -74,6 +75,7 @@ class AdminPageController extends Controller
      *   daily: array<int, array{label: string, date: string, count: int}>,
      *   topCustomers: array<int, array{name: string, orders: int, spent: string}>,
      *   topFoods: array<int, array{name: string, quantity: int}>
+     *   pendingOrders: array<int, array{id: int, code: string, createdAt: string}>
      * }
      */
     private function getDashboardStats(CarbonImmutable $from, CarbonImmutable $to): array
@@ -140,6 +142,18 @@ class AdminPageController extends Controller
             ])
             ->all();
 
+        $pendingOrders = Order::query()
+            ->where('status', Order::STATUS_PENDING)
+            ->latest('created_at')
+            ->limit(5)
+            ->get()
+            ->map(fn (Order $order): array => [
+                'id' => $order->id_order,
+                'code' => 'DH'.str_pad((string) $order->id_order, 3, '0', STR_PAD_LEFT),
+                'createdAt' => $order->created_at?->format('d/m H:i') ?? '',
+            ])
+            ->all();
+
         return [
             'revenue' => $revenue,
             'pending' => $pending,
@@ -150,6 +164,7 @@ class AdminPageController extends Controller
             'daily' => $daily,
             'topCustomers' => $topCustomers,
             'topFoods' => $topFoods,
+            'pendingOrders' => $pendingOrders,
         ];
     }
 

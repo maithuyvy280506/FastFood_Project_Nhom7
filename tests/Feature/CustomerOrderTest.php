@@ -108,6 +108,57 @@ class CustomerOrderTest extends TestCase
         ]);
     }
 
+    public function test_customer_order_is_created_for_admin_dashboard_and_order_list(): void
+    {
+        $customerId = $this->createCustomer('A');
+        $categoryId = DB::table('categories')->insertGetId(['name' => 'Gà', 'status' => 1]);
+        $productId = DB::table('products')->insertGetId([
+            'id_category' => $categoryId,
+            'name' => 'Gà rán',
+            'price' => 50000,
+            'description' => 'Gà rán',
+            'isFlashSale' => 0,
+            'image' => '/ga.jpg',
+            'is_active' => 1,
+        ]);
+        DB::table('carts')->insert([
+            'id_user' => $customerId,
+            'id_product' => $productId,
+            'quantity' => 2,
+        ]);
+
+        $this->withSession([
+            'user_id' => $customerId,
+            'user_role' => 0,
+        ])->post(route('cart.place-order'), [
+            'customer_name' => 'Nguyễn Văn A',
+            'customer_phone' => '0900000000',
+            'customer_address' => '123 Đường ABC',
+            'method' => 1,
+            'note' => 'Giao nhanh',
+        ])->assertRedirect();
+
+        $orderId = (int) DB::table('orders')->where('id_user', $customerId)->value('id_order');
+
+        $this->assertGreaterThan(0, $orderId);
+        $this->assertDatabaseHas('orders', [
+            'id_order' => $orderId,
+            'id_user' => $customerId,
+            'status' => 0,
+            'total_price' => 130000,
+        ]);
+
+        $this->withSession(['user_role' => 1])
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('DH'.str_pad((string) $orderId, 3, '0', STR_PAD_LEFT));
+
+        $this->withSession(['user_role' => 1])
+            ->get(route('admin.orders.index'))
+            ->assertOk()
+            ->assertSee('Nguyễn Văn A');
+    }
+
     private function createCustomer(string $name): int
     {
         return (int) DB::table('users')->insertGetId([

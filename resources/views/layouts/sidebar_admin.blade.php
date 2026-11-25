@@ -47,12 +47,6 @@
             </a>
         </li>
         <li>
-            <a href="{{ url('/admin/drivers') }}" class="{{ request()->is('admin/drivers*') ? 'active' : '' }}">
-                <i class="fa-solid fa-motorcycle"></i>
-                <span>Quản lý tài xế</span>
-            </a>
-        </li>
-        <li>
             <a href="{{ url('/admin/promotions') }}" class="{{ request()->is('admin/promotions*') ? 'active' : '' }}">
                 <i class="fa-solid fa-tags"></i>
                 <span>Quản lý khuyến mãi</span>

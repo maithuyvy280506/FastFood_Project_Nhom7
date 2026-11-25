@@ -156,6 +156,13 @@ class FastFoodDataSeeder extends Seeder
                 $method = 2;
             }
 
+            $orderCreatedAt = isset($order['createdAt'])
+                ? Carbon::parse($order['createdAt'])
+                : Carbon::now();
+            $orderUpdatedAt = isset($order['updatedAt'])
+                ? Carbon::parse($order['updatedAt'])
+                : $orderCreatedAt;
+
             // Insert vào bảng orders
             $orderId = DB::table('orders')->insertGetId([
                 'id_user' => $userId,
@@ -169,8 +176,8 @@ class FastFoodDataSeeder extends Seeder
                 'shipping_fee' => (int) $shippingFee,
                 'status' => $status,
                 'method' => $method,
-                'created_at' => isset($order['createdAt']) ? Carbon::parse($order['createdAt']) : Carbon::now(),
-                'updated_at' => isset($order['updatedAt']) ? Carbon::parse($order['updatedAt']) : Carbon::now(),
+                'created_at' => $orderCreatedAt,
+                'updated_at' => $orderUpdatedAt,
             ]);
 
             // Duyệt mảng items trong đơn hàng để đưa vào order_details
@@ -190,6 +197,8 @@ class FastFoodDataSeeder extends Seeder
                         'quantity' => $item['quantity'],
                         'variants_selected' => isset($item['selectedVariants']) ? json_encode($item['selectedVariants'], JSON_UNESCAPED_UNICODE) : null,
                         'price' => (int) $unitPrice,
+                        'created_at' => $orderCreatedAt,
+                        'updated_at' => $orderUpdatedAt,
                     ]);
                 }
             }

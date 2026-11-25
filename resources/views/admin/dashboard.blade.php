@@ -49,12 +49,16 @@
         <article class="admin-panel pending-panel">
             <div class="admin-panel-heading"><h2>CHỜ XÁC NHẬN</h2></div>
             <div class="pending-table-heading"><span>Mã đơn</span><span>Trạng thái</span></div>
-            @foreach($pendingOrders as $order)
-                <a class="pending-order-row" href="{{ route('admin.orders.show', substr($order['code'], 2)) }}">
-                    <span><strong>{{ $order['code'] }}</strong><small>{{ $order['createdAt'] }}</small></span>
-                    <span class="status-pill status-pending">Chờ xác nhận</span>
-                </a>
-            @endforeach
+            <div id="pendingOrdersList">
+                @forelse($pendingOrders as $order)
+                    <a class="pending-order-row" href="{{ route('admin.orders.show', $order['id']) }}">
+                        <span><strong>{{ $order['code'] }}</strong><small>{{ $order['createdAt'] }}</small></span>
+                        <span class="status-pill status-pending">Chờ xác nhận</span>
+                    </a>
+                @empty
+                    <div class="top-row"><strong>Chưa có đơn chờ xác nhận</strong></div>
+                @endforelse
+            </div>
         </article>
     </section>
 
@@ -187,6 +191,42 @@
         });
     }
 
+    function renderPendingOrders(rows) {
+        const container = document.getElementById('pendingOrdersList');
+        if (!container) return;
+        container.innerHTML = '';
+
+        if (!rows.length) {
+            const empty = document.createElement('div');
+            empty.className = 'top-row';
+            const name = document.createElement('strong');
+            name.textContent = 'Chưa có đơn chờ xác nhận';
+            empty.appendChild(name);
+            container.appendChild(empty);
+            return;
+        }
+
+        rows.forEach(order => {
+            const link = document.createElement('a');
+            link.className = 'pending-order-row';
+            link.href = @json(url('/admin/orders')) + '/' + order.id;
+
+            const details = document.createElement('span');
+            const code = document.createElement('strong');
+            code.textContent = order.code;
+            const createdAt = document.createElement('small');
+            createdAt.textContent = order.createdAt;
+            details.append(code, createdAt);
+
+            const status = document.createElement('span');
+            status.className = 'status-pill status-pending';
+            status.textContent = 'Chờ xác nhận';
+
+            link.append(details, status);
+            container.appendChild(link);
+        });
+    }
+
     const initialDashboardData = @json($stats);
     renderDashboardChart(initialDashboardData.daily);
 
@@ -218,6 +258,7 @@
             renderDashboardChart(data.stats.daily);
             renderTopList('topCustomersList', data.stats.topCustomers, 'customer');
             renderTopList('topFoodsList', data.stats.topFoods, 'food');
+            renderPendingOrders(data.stats.pendingOrders);
         } catch (error) {
             if (typeof showSiteToast === 'function') showSiteToast(error.message, 'error');
             else alert(error.message);
@@ -226,5 +267,31 @@
             button.textContent = 'Lọc';
         }
     });
+
+    setInterval(async function () {
+        const from = document.getElementById('date-from')?.value;
+        const to = document.getElementById('date-to')?.value;
+        if (!from || !to) return;
+
+        try {
+            const response = await fetch(@json(route('admin.dashboard.stats')) + `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`, {
+                headers: { Accept: 'application/json' },
+                cache: 'no-store'
+            });
+            const data = await response.json();
+            if (!response.ok) return;
+
+            document.getElementById('dashboardRevenue').textContent = formatDashboardCurrency(data.stats.revenue);
+            document.getElementById('dashboardPending').textContent = data.stats.pending;
+            document.getElementById('dashboardTotal').textContent = data.stats.total;
+            document.getElementById('dashboardCancelled').textContent = `${Number(data.stats.cancellationRate).toFixed(1).replace('.', ',')}%`;
+            renderDashboardChart(data.stats.daily);
+            renderTopList('topCustomersList', data.stats.topCustomers, 'customer');
+            renderTopList('topFoodsList', data.stats.topFoods, 'food');
+            renderPendingOrders(data.stats.pendingOrders);
+        } catch (_) {
+            // Giữ dữ liệu hiện tại nếu yêu cầu làm mới tạm thời thất bại.
+        }
+    }, 15000);
 </script>
 @endsection

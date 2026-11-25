@@ -7,9 +7,9 @@
 
     <!-- Tích hợp Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <!-- Thêm jQuery phục vụ các đoạn AJAX bên dưới -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
     <style>
         * {
             box-sizing: border-box;
@@ -17,7 +17,6 @@
             padding: 0;
             font-family: Arial, sans-serif;
         }
-
         body {
             background-color: #ffffff;
             color: #333;
@@ -42,13 +41,11 @@
             z-index: 1000;
             border-bottom: 3px solid #e74c3c;
         }
-
         .header-left {
             display: flex;
             align-items: center;
             gap: 25px;
         }
-
         .logo {
             font-size: 22px;
             font-weight: 900;
@@ -59,11 +56,9 @@
             align-items: center;
             gap: 8px;
         }
-
         .logo i {
             color: #ff9f43;
         }
-
         .delivery-location {
             display: flex;
             align-items: center;
@@ -77,11 +72,9 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-
         .delivery-location:hover {
             background: #ffe8d6;
         }
-
         .delivery-location strong {
             color: #e74c3c;
             max-width: 150px;
@@ -91,14 +84,12 @@
             display: inline-block;
             vertical-align: middle;
         }
-
         .header-center {
             flex: 1;
             max-width: 500px;
             margin: 0 20px;
             position: relative;
         }
-
         .search-input {
             width: 100%;
             padding: 10px 45px 10px 15px;
@@ -109,13 +100,11 @@
             background-color: #fffcfb;
             transition: all 0.3s;
         }
-
         .search-input:focus {
             border-color: #ff9f43;
             box-shadow: 0 0 6px rgba(255, 159, 67, 0.3);
             background-color: #ffffff;
         }
-
         .search-btn {
             position: absolute;
             right: 15px;
@@ -127,13 +116,11 @@
             font-size: 16px;
             color: #e74c3c;
         }
-
         .header-right {
             display: flex;
             align-items: center;
             gap: 15px;
         }
-
         .user-auth-btn {
             background: linear-gradient(135deg, #e74c3c, #ff9f43);
             color: white;
@@ -145,7 +132,6 @@
             box-shadow: 0 3px 6px rgba(231, 76, 60, 0.3);
             transition: transform 0.2s, box-shadow 0.2s;
         }
-
         .user-auth-btn:hover {
             transform: translateY(-1px);
             box-shadow: 0 5px 10px rgba(231, 76, 60, 0.4);
@@ -165,11 +151,9 @@
             border-radius: 20px;
             transition: background 0.2s;
         }
-
         .user-profile:hover {
             background: #fff5f2;
         }
-
         .header-avatar {
             width: 32px;
             height: 32px;
@@ -182,7 +166,6 @@
             font-size: 15px;
             text-transform: uppercase;
         }
-
         .user-dropdown-panel {
             display: none;
             position: absolute;
@@ -197,11 +180,9 @@
             overflow: hidden;
             cursor: default;
         }
-
         .user-dropdown-panel.active {
             display: block;
         }
-
         .dropdown-header {
             padding: 20px;
             background: #fff5f2;
@@ -210,7 +191,6 @@
             gap: 15px;
             border-bottom: 1px solid #ffe8d6;
         }
-
         .dropdown-avatar {
             width: 50px;
             height: 50px;
@@ -223,20 +203,17 @@
             font-weight: bold;
             text-transform: uppercase;
         }
-
         .dropdown-user-info h4 {
             margin: 0;
             font-size: 16px;
             color: #333;
         }
-
         .dropdown-user-info p {
             margin: 4px 0 0;
             font-size: 13px;
             color: #666;
             word-break: break-all;
         }
-
         .dropdown-section-title {
             padding: 15px 20px 5px;
             font-size: 12px;
@@ -244,13 +221,11 @@
             color: #ff9f43;
             text-transform: uppercase;
         }
-
         .dropdown-menu-list {
             list-style: none;
             padding: 0;
             margin: 0;
         }
-
         .dropdown-menu-list li a {
             display: flex;
             justify-content: space-between;
@@ -262,18 +237,15 @@
             transition: background 0.2s;
             border-bottom: 1px solid #f9f9f9;
         }
-
         .dropdown-menu-list li a:hover {
             background: #fffafa;
             color: #e74c3c;
         }
-
         .dropdown-menu-list li a i.icon-left {
             width: 25px;
             color: #ffb870;
             font-size: 16px;
         }
-
         .dropdown-menu-list li a i.icon-right {
             color: #ccc;
             font-size: 12px;
@@ -294,12 +266,10 @@
             opacity: 0;
             transition: opacity 0.3s ease;
         }
-
         .modal-overlay.active {
             display: flex;
             opacity: 1;
         }
-
         .address-modal {
             background: #fff;
             width: 450px;
@@ -309,11 +279,9 @@
             transform: translateY(-20px);
             transition: transform 0.3s ease;
         }
-
         .modal-overlay.active .address-modal {
             transform: translateY(0);
         }
-
         .order-success-overlay {
             position: fixed;
             inset: 0;
@@ -325,12 +293,10 @@
             background: rgba(47, 53, 66, 0.48);
             backdrop-filter: blur(3px);
         }
-
         .order-success-overlay.active {
             display: flex;
             animation: orderSuccessFadeIn 0.18s ease-out;
         }
-
         .order-success-modal {
             width: min(440px, 100%);
             background: #ffffff;
@@ -341,11 +307,9 @@
             overflow: hidden;
             animation: orderSuccessPop 0.24s ease-out;
         }
-
         .order-success-body {
             padding: 28px 30px 24px;
         }
-
         .order-success-icon {
             width: 72px;
             height: 72px;
@@ -359,19 +323,16 @@
             font-size: 34px;
             border: 7px solid #f4fbf7;
         }
-
         .order-success-modal h2 {
             margin: 0 0 8px;
             color: #2f3542;
             font-size: 22px;
         }
-
         .order-success-modal p {
             margin: 0;
             color: #747d8c;
             line-height: 1.55;
         }
-
         .order-success-summary {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -380,33 +341,27 @@
             border: 1px solid #ffe8d6;
             border-radius: 10px;
         }
-
         .order-success-summary div {
             padding: 12px 8px;
         }
-
         .order-success-summary div + div {
             border-left: 1px solid #ffe8d6;
         }
-
         .order-success-summary small {
             display: block;
             color: #999;
             margin-bottom: 4px;
         }
-
         .order-success-summary strong {
             color: #e74c3c;
             font-size: 16px;
         }
-
         .order-success-actions {
             display: grid;
             grid-template-columns: 1fr 1.35fr;
             gap: 10px;
             margin-top: 22px;
         }
-
         .order-success-actions a,
         .order-success-actions button {
             min-height: 44px;
@@ -419,30 +374,25 @@
             font-size: 14px;
             cursor: pointer;
         }
-
         .order-success-actions a {
             color: #555;
             border: 1px solid #ddd;
             background: #fff;
         }
-
         .order-success-actions button {
             border: 0;
             color: #fff;
             background: linear-gradient(135deg, #e74c3c, #ff9f43);
             box-shadow: 0 5px 12px rgba(231, 76, 60, 0.24);
         }
-
         @keyframes orderSuccessFadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
-
         @keyframes orderSuccessPop {
             from { opacity: 0; transform: translateY(14px) scale(0.97); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
-
         .site-toast {
             position: fixed;
             top: 88px;
@@ -464,21 +414,17 @@
             pointer-events: none;
             transition: opacity 0.22s ease, transform 0.22s ease;
         }
-
         .site-toast.active {
             opacity: 1;
             transform: translateX(0);
             pointer-events: auto;
         }
-
         .site-toast.error {
             border-left-color: #e74c3c;
         }
-
         .site-toast.info {
             border-left-color: #ff9f43;
         }
-
         .site-toast-icon {
             width: 34px;
             height: 34px;
@@ -490,35 +436,29 @@
             background: #eafaf1;
             color: #27ae60;
         }
-
         .site-toast.error .site-toast-icon {
             background: #fdecea;
             color: #e74c3c;
         }
-
         .site-toast.info .site-toast-icon {
             background: #fff4e7;
             color: #ff9f43;
         }
-
         .site-toast-content {
             flex: 1;
             padding-top: 1px;
         }
-
         .site-toast-content strong {
             display: block;
             margin-bottom: 3px;
             font-size: 14px;
         }
-
         .site-toast-content span {
             display: block;
             color: #747d8c;
             font-size: 13px;
             line-height: 1.45;
         }
-
         .site-toast-close {
             border: 0;
             background: transparent;
@@ -526,7 +466,6 @@
             cursor: pointer;
             padding: 2px;
         }
-
         .address-modal-header {
             display: flex;
             justify-content: space-between;
@@ -536,7 +475,6 @@
             font-size: 18px;
             color: #333;
         }
-
         .close-modal {
             cursor: pointer;
             color: #999;
@@ -545,22 +483,18 @@
             background: none;
             transition: color 0.2s;
         }
-
         .close-modal:hover {
             color: #e74c3c;
         }
-
         .address-input-wrapper {
             position: relative;
         }
-
         .address-input-wrapper i {
             position: absolute;
             left: 15px;
             top: 12px;
             color: #ff9f43;
         }
-
         .address-input {
             width: 100%;
             padding: 12px 15px 12px 40px;
@@ -570,12 +504,10 @@
             outline: none;
             transition: border-color 0.3s;
         }
-
         .address-input:focus {
             border-color: #e74c3c;
             box-shadow: 0 0 5px rgba(231,76,60,0.2);
         }
-
         .btn-save-address {
             width: 100%;
             margin-top: 15px;
@@ -589,7 +521,6 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-
         .btn-save-address:hover {
             background: #c0392b;
         }
@@ -614,11 +545,9 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.08);
             transition: left 0.3s ease, opacity 0.3s, box-shadow 0.3s;
         }
-
         .fixed-menu-btn:hover {
             box-shadow: 0 4px 10px rgba(231, 76, 60, 0.2);
         }
-
         .fixed-menu-btn.faded {
             left: 15px;
             opacity: 0.4;
@@ -630,7 +559,6 @@
             flex: 1;
             margin-top: 70px;
         }
-
         .sidebar {
             width: 260px;
             background-color: #ffffff;
@@ -642,11 +570,9 @@
             transition: transform 0.3s ease;
             z-index: 900;
         }
-
         .sidebar.collapsed {
             transform: translateX(-260px);
         }
-
         .sidebar-section-title {
             padding: 15px 20px 8px;
             font-size: 11px;
@@ -655,13 +581,11 @@
             font-weight: bold;
             letter-spacing: 0.5px;
         }
-
         .sidebar-menu {
             list-style: none;
             padding: 0;
             margin: 0;
         }
-
         .sidebar-menu li a {
             display: flex;
             align-items: center;
@@ -673,25 +597,21 @@
             border-left: 4px solid transparent;
             padding-right: 45px;
         }
-
         .sidebar-menu li a i {
             width: 25px;
             font-size: 15px;
             color: #ffb870;
             transition: color 0.2s;
         }
-
         .sidebar-menu li a:hover, .sidebar-menu li a.active {
             background-color: #fff5f2;
             color: #e74c3c;
             border-left-color: #e74c3c;
             font-weight: bold;
         }
-
         .sidebar-menu li a:hover i, .sidebar-menu li a.active i {
             color: #e74c3c;
         }
-
         .main-content {
             margin-left: 260px;
             flex: 1;
@@ -701,7 +621,6 @@
             flex-direction: column;
             background-color: #fafafa;
         }
-
         .main-content.expanded {
             margin-left: 0;
         }
@@ -718,7 +637,6 @@
             position: relative;
             z-index: 950;
         }
-
         .footer p {
             margin-bottom: 6px;
             color: #bbb;
@@ -727,7 +645,6 @@
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
 </head>
 <body>
-
     @php
         $banners = $banners ?? [
             "https://intphcm.com/data/upload/poster-tra-sua-dac-sac.jpg",
@@ -737,29 +654,23 @@
             "https://cdn.s99.vn/ss1/prod/product/5fff27bb45cef24f69225ae6a2425871.jpg"
         ];
         $totalBanners = count($banners);
-
         $isFlashSaleActive = $showFlashSale ?? true;
         $flashSaleEndTime = $flashSaleEndTime ?? date('Y-m-d\TH:i:s', strtotime('+2 hours 30 minutes'));
-
         // Xử lý phân quyền từ Session Laravel
         $currentController = Request()->route()->getActionname(); // Hoặc lấy tên controller hiện tại
         $currentRole = session('user_role', ''); // Role từ MySQL: 0 (Customer), 1 (Admin), 2 (Staff)
-
         $isAdminArea = ($currentRole == 1);
         $hideSidebar = $isAdminArea; // Tùy chỉnh ẩn hiện sidebar theo ý bạn
-
         $userFullName = session('user_name', '');
         $userEmail = session('user_email', 'user.email@gmail.com');
         $userPhone = session('user_phone', '0901 234 567');
         $userAddress = session('user_address', 'Nhập địa chỉ');
-
         $avatarLetter = "U";
         $avatarBgColor = "#e74c3c";
         if (!empty($userFullName)) {
             $nameParts = explode(' ', trim($userFullName));
             $displayFirstName = end($nameParts);
             $avatarLetter = strtoupper(mb_substr($displayFirstName, 0, 1));
-
             $bgColors = ["#e74c3c", "#3498db", "#2ecc71", "#f1c40f", "#9b59b6", "#1abc9c", "#e67e22", "#34495e", "#ff7979", "#badc58", "#005a54"];
             $colorIndex = abs(crc32($userFullName)) % count($bgColors);
             $avatarBgColor = $bgColors[$colorIndex];
@@ -779,7 +690,6 @@
             <a href="{{ url('/foods') }}" class="logo">
                 FASTFOOD STORE
             </a>
-
             @if (!$isAdminArea)
                 <div class="delivery-location" onclick="openAddressModal()">
                     <i class="fa-solid fa-location-dot"></i>
@@ -788,22 +698,28 @@
                 </div>
             @endif
         </div>
-
-        <div class="header-center">
-            <form action="{{ url('/foods') }}" method="get">
-                <input type="text" name="search" class="search-input" placeholder="Tìm món ăn, nước uống..." value="{{ request('search') }}" />
-                <button type="submit" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
-            </form>
-        </div>
-
+        {{-- Thanh tìm kiếm chỉ hiển thị ở trang chủ --}}
+        @if (request()->is('foods', '/') && !$isAdminArea)
+            <div class="header-center">
+                <form action="{{ url('/foods') }}" method="GET">
+                    <input type="text"
+                        name="search"
+                        class="search-input"
+                        placeholder="Tìm món ăn, nước uống..."
+                        value="{{ request('search') }}">
+                    <button type="submit" class="search-btn">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </form>
+            </div>
+        @endif
         <div class="header-right">
             @if (!empty($userFullName))
                 <div class="user-profile" onclick="toggleUserDropdown(event)">
                     <div class="header-avatar" style="background-color: {{ $avatarBgColor }};">
                         {{ $avatarLetter }}
                     </div>
-                    <span>{{ $userFullName }}</span>
-
+                        <span>{{ mb_strtoupper($userFullName, 'UTF-8') }}</span>
                     <div class="user-dropdown-panel" id="userDropdownPanel">
                         <div class="dropdown-header">
                             <div class="dropdown-avatar" style="background-color: {{ $avatarBgColor }};">
@@ -815,7 +731,6 @@
                                 <p>{{ $userEmail }}</p>
                             </div>
                         </div>
-
                         <div class="dropdown-section-title">Tài khoản khách hàng</div>
                         <ul class="dropdown-menu-list">
                             <li>
@@ -831,7 +746,6 @@
                                 </a>
                             </li>
                         </ul>
-
                         <div class="dropdown-section-title">Tài khoản</div>
                         <ul class="dropdown-menu-list">
                             <li>
@@ -849,7 +763,6 @@
             @endif
         </div>
     </header>
-
     <div class="wrapper">
         @if ($isAdminArea)
             @include('layouts.sidebar_admin')
@@ -879,7 +792,6 @@
             </div>
         </div>
     @endif
-
     @if (session()->has('order_success'))
         @php $orderSuccess = session('order_success'); @endphp
         <div class="order-success-overlay" id="orderSuccessModal" role="dialog" aria-modal="true" aria-labelledby="orderSuccessTitle">
@@ -890,7 +802,6 @@
                     </div>
                     <h2 id="orderSuccessTitle">Đặt hàng thành công!</h2>
                     <p>Đơn hàng của bạn đã được tiếp nhận.<br>Hãy theo dõi trạng thái giao hàng trong mục đơn hàng.</p>
-
                     <div class="order-success-summary">
                         <div>
                             <small>Mã đơn hàng</small>
@@ -901,7 +812,6 @@
                             <strong>{{ $orderSuccess['total'] }}</strong>
                         </div>
                     </div>
-
                     <div class="order-success-actions">
                         <button type="button" onclick="window.location.href='{{ url('/foods') }}'">Tiếp tục mua</button>
                         <a href="{{ route('customer.orders.index') }}">
@@ -922,20 +832,18 @@
 
     <!-- SCRIPT XỬ LÝ GIAO DIỆN -->
     <script>
+
         function showSiteToast(message, type = 'success') {
             const existingToast = document.querySelector('.site-toast');
             if (existingToast) existingToast.remove();
-
             const toast = document.createElement('div');
             toast.className = `site-toast ${type === 'error' ? 'error' : (type === 'info' ? 'info' : '')}`;
-
             const icon = type === 'error'
                 ? 'fa-circle-exclamation'
                 : (type === 'info' ? 'fa-circle-info' : 'fa-check');
             const title = type === 'error'
-                ? 'Không thể thêm món'
+                ? 'Có lỗi xảy ra'
                 : (type === 'info' ? 'Thông báo' : 'Thành công');
-
             toast.innerHTML = `
                 <div class="site-toast-icon"><i class="fa-solid ${icon}"></i></div>
                 <div class="site-toast-content">
@@ -948,14 +856,11 @@
             `;
             toast.querySelector('.site-toast-content span').textContent = message;
             document.body.appendChild(toast);
-
             requestAnimationFrame(() => toast.classList.add('active'));
-
             const removeToast = () => {
                 toast.classList.remove('active');
                 setTimeout(() => toast.remove(), 220);
             };
-
             toast.querySelector('.site-toast-close').addEventListener('click', removeToast);
             toast._hideTimer = setTimeout(removeToast, 3500);
         }
@@ -963,7 +868,6 @@
         function checkCustomerPermission(event, targetUrl) {
             event.preventDefault();
             var isAdmin = @json($isAdminArea);
-
             if (isAdmin) {
                 alert("Chỉ khách hàng mới được thao tác");
             } else {
@@ -986,7 +890,6 @@
             let panel = document.getElementById("userDropdownPanel");
             if (panel) panel.classList.toggle("active");
         }
-
         window.onclick = function(event) {
             if (!event.target.closest('.user-profile')) {
                 let dropdowns = document.getElementsByClassName("user-dropdown-panel");
@@ -999,6 +902,10 @@
         }
 
         function openAddressModal() {
+            if (!@json(session()->has('user_email'))) {
+                showSiteToast('Vui lòng đăng nhập để lưu địa chỉ.', 'info');
+                return;
+            }
             let modal = document.getElementById("addressModal");
             if (modal) modal.classList.add("active");
             let input = document.getElementById("addressInput");
@@ -1018,46 +925,54 @@
             let modal = document.getElementById("orderSuccessModal");
             if (modal) modal.classList.remove("active");
         }
-
         document.addEventListener('DOMContentLoaded', function () {
             let orderSuccessModal = document.getElementById("orderSuccessModal");
             if (orderSuccessModal) {
                 orderSuccessModal.classList.add("active");
             }
         });
-
         document.addEventListener('keydown', function (event) {
             if (event.key === 'Escape') {
                 closeOrderSuccessModal();
             }
         });
 
-        function saveNewAddress() {
-            let input = document.getElementById("addressInput");
-            if (input) {
-                let address = input.value.trim();
-                if (address !== "") {
-                    let displayAddr = document.getElementById("displayAddress");
-                    if (displayAddr) displayAddr.innerText = address;
-                    closeAddressModal();
-
-                    // Gọi AJAX cập nhật địa chỉ trong Laravel
-                    $.ajax({
-                        url: '/customer/update-address',
-                        type: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}',
-                            address: address
-                        },
-                        success: function (res) {
-                            if (!res.success) {
-                                console.log("Lỗi lưu địa chỉ");
-                            }
-                        }
-                    });
-                } else {
-                    alert("Vui lòng nhập địa chỉ!");
+        async function saveNewAddress() {
+            const input = document.getElementById('addressInput');
+            const button = document.querySelector('.btn-save-address');
+            const address = input?.value.trim();
+            if (!address) {
+                showSiteToast('Vui lòng nhập địa chỉ!', 'error');
+                return;
+            }
+            if (button.disabled) return;
+            button.disabled = true;
+            button.textContent = 'ĐANG LƯU...';
+            try {
+                const response = await fetch(@json(route('customer.update-address')), {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': @json(csrf_token())
+                    },
+                    body: JSON.stringify({ address })
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.errors?.address?.[0] || data.message || 'Không thể lưu địa chỉ.');
                 }
+                const display = document.getElementById('displayAddress');
+                if (display) display.textContent = data.address;
+                const checkout = document.querySelector('[name="customer_address"]');
+                if (checkout) checkout.value = data.address;
+                closeAddressModal();
+                showSiteToast('Đã cập nhật địa chỉ giao hàng.', 'success');
+            } catch (error) {
+                showSiteToast(error.message || 'Không thể lưu địa chỉ.', 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'LƯU ĐỊA CHỈ';
             }
         }
     </script>

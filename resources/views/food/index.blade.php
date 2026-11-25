@@ -18,6 +18,7 @@
         "https://cdn.s99.vn/ss1/prod/product/5fff27bb45cef24f69225ae6a2425871.jpg"
     ];
 
+    $banners = collect($banners)->values()->all();
     $totalBanners = count($banners);
     $trackWidth = ($totalBanners * 100) . "%";
     $slideWidth = (100.0 / $totalBanners) . "%";
@@ -34,13 +35,6 @@
         margin-bottom: 20px;
     }
 
-    .banner-grid-2 {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        width: 100%;
-    }
-
     .banner-slider-container {
         position: relative;
         width: 100%;
@@ -52,17 +46,23 @@
         border: 1px solid #ffe8d6;
     }
 
+    .banner-grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+        width: 100%;
+    }
     .slider-track {
         display: flex;
         height: 100%;
         transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
     }
-
     .slide-item {
         height: 100%;
         object-fit: cover;
+        flex-shrink: 0;
+        display: block;
     }
-
     .global-slider-btn {
         position: absolute;
         top: 50%;
@@ -83,16 +83,20 @@
         box-shadow: 0 3px 8px rgba(231, 76, 60, 0.4);
     }
 
+    .global-slider-btn:disabled {
+        display: none;
+    }
+
     .global-slider-btn:hover {
         background: #c0392b;
     }
 
     .global-btn-prev {
-        left: -22px;
+        left: 10px;
     }
 
     .global-btn-next {
-        right: -22px;
+        right: 10px;
     }
 
     /* --- CSS CỦA MÓN ĂN --- */
@@ -235,7 +239,7 @@
 
 @if ($totalBanners > 0)
     <div class="banner-wrapper">
-        <button class="global-slider-btn global-btn-prev" onclick="moveGlobalSlide(-1)">
+        <button type="button" class="global-slider-btn global-btn-prev" aria-label="Banner trước" @disabled($totalBanners <= 1)>
             <i class="fa-solid fa-chevron-left"></i>
         </button>
         <div class="banner-grid-2">
@@ -255,7 +259,7 @@
                 </div>
             </div>
         </div>
-        <button class="global-slider-btn global-btn-next" onclick="moveGlobalSlide(1)">
+        <button type="button" class="global-slider-btn global-btn-next" aria-label="Banner tiếp theo" @disabled($totalBanners <= 1)>
             <i class="fa-solid fa-chevron-right"></i>
         </button>
     </div>
@@ -369,6 +373,44 @@
 <script>
     var isAdminUser = @json($isAdmin);
 
+    // ==================== XỬ LÝ BANNER ====================
+    document.addEventListener('DOMContentLoaded', function () {
+        const wrapper = document.querySelector('.banner-wrapper');
+        if (!wrapper) return;
+        const tracks = wrapper.querySelectorAll('.slider-track');
+        const prev = wrapper.querySelector('.global-btn-prev');
+        const next = wrapper.querySelector('.global-btn-next');
+        const total = tracks[0]?.children.length || 0;
+        let current = 0;
+        let timer;
+        if (total <= 1) return;
+
+        function updatePosition() {
+            tracks.forEach(function (track) {
+                track.style.transform = `translateX(${-current * 100 / total}%)`;
+            });
+        }
+        function move(direction) {
+            current = (current + direction + total) % total;
+            updatePosition();
+        }
+        function startAutoSlide() {
+            clearInterval(timer);
+            timer = setInterval(function () { move(1); }, 5000);
+        }
+        prev.addEventListener('click', function () {
+            move(-1);
+            startAutoSlide();
+        });
+        next.addEventListener('click', function () {
+            move(1);
+            startAutoSlide();
+        });
+        updatePosition();
+        startAutoSlide();
+    });
+
+    // ==================== KIỂM TRA QUYỀN ====================
     function checkAdminAndGoToCart(cartUrl) {
         if (isAdminUser) {
             showSiteToast("Vui lòng đăng nhập tài khoản khách hàng để thực hiện.", 'info');
@@ -377,8 +419,9 @@
         window.location.href = cartUrl;
     }
 
+    // ==================== KHỞI TẠO TRANG ====================
     $(document).ready(function () {
-        // Lấy số lượng giỏ hàng khi load trang
+        // Lấy số lượng giỏ hàng khi tải trang
         $.ajax({
             url: '/cart/count',
             type: 'GET',
@@ -390,15 +433,13 @@
         });
     });
 
-    // Thêm món ăn nhanh vào giỏ hàng qua AJAX
+    // ==================== THÊM MÓN VÀO GIỎ HÀNG ====================
     $(document).on('click', '.btn-add-quick', function () {
         if (isAdminUser) {
             showSiteToast("Vui lòng đăng nhập tài khoản khách hàng để thực hiện.", 'info');
             return;
         }
-
         var foodId = $(this).data('foodid');
-
         $.ajax({
             url: '/cart/add',
             type: 'POST',

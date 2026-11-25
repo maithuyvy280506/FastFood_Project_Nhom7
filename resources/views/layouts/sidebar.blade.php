@@ -8,7 +8,7 @@
         </li>
         <li>
             <a href="{{ url('/foods') }}?category=1&search={{ request('search') }}" class="{{ request('category') == '1' ? 'active' : '' }}">
-                <i class="fa-solid fa-drumstick-bite"></i> <span>Gà Rán</span>
+                <i class="fa-solid fa-drumstick-bite"></i> <span>Gà rán</span>
             </a>
         </li>
         <li>
@@ -48,7 +48,7 @@
         </li>
         <li>
             <a href="{{ url('/foods') }}?category=3&search={{ request('search') }}" class="{{ request('category') == '3' ? 'active' : '' }}">
-                <i class="fa-solid fa-mug-hot"></i> <span>Trà Sữa & Đồ Uống</span>
+                <i class="fa-solid fa-mug-hot"></i> <span>Trà sữa & Đồ uống</span>
             </a>
         </li>
     </ul>

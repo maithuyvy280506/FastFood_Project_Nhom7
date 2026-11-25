@@ -2,82 +2,47 @@
 
 @section('content')
 <div class="admin-page">
-    <section class="admin-panel table-panel">
-        <div class="admin-list-toolbar">
-            <h1>DANH SÁCH ĐƠN HÀNG</h1>
-            <select class="admin-input filter-select" aria-label="Lọc nâng cao">
-                <option>-- Lọc nâng cao --</option>
-                <option>Đơn mới nhất</option>
-                <option>Giá trị cao nhất</option>
-            </select>
-            <div class="status-tabs" aria-label="Lọc trạng thái">
-                <button type="button" class="status-tab is-active">Tất cả</button>
-                <button type="button" class="status-tab">Chờ xác nhận</button>
-                <button type="button" class="status-tab">Đang chuẩn bị</button>
-                <button type="button" class="status-tab">Đang giao</button>
-                <button type="button" class="status-tab">Đã giao</button>
-                <button type="button" class="status-tab">Đã hủy</button>
-            </div>
-        </div>
+    <section class="admin-panel" style="padding:24px;">
+        <h1 style="color:#e74c3c;">DANH SÁCH ĐƠN HÀNG</h1>
 
-        <div class="admin-table-scroll">
-            <table class="admin-table order-table">
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;margin-top:18px;">
                 <thead>
-                    <tr>
-                        <th>Mã đơn</th><th>Ngày đặt</th><th>Khách hàng</th><th>Thanh toán</th>
-                        <th>Cập nhật</th><th>Tổng tiền</th><th>Trạng thái</th><th>Thao tác</th>
+                    <tr style="border-bottom:1px solid #eee;text-align:left;">
+                        <th style="padding:12px;">Mã đơn</th>
+                        <th style="padding:12px;">Ngày đặt</th>
+                        <th style="padding:12px;">Khách hàng</th>
+                        <th style="padding:12px;">Thanh toán</th>
+                        <th style="padding:12px;">Tổng tiền</th>
+                        <th style="padding:12px;">Trạng thái</th>
+                        <th style="padding:12px;"></th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($orders as $order)
-                        <tr>
-                            <td><strong class="accent-text">{{ $order['code'] }}</strong></td>
-                            <td>{{ $order['date'] }}</td>
-                            <td>{{ $order['customer'] }}</td>
-                            <td>{{ $order['payment'] }}</td>
-                            <td>{{ $order['updated'] }}</td>
-                            <td><strong>{{ $order['total'] }}</strong></td>
-                            <td><span class="status-pill {{ $order['status'] === 'Đã hủy' ? 'status-cancelled' : ($order['status'] === 'Đang chuẩn bị' ? 'status-preparing' : ($order['status'] === 'Đang giao' ? 'status-delivering' : 'status-pending')) }}">{{ $order['status'] }}</span></td>
-                            <td class="order-actions">
-                                @if($order['status'] !== 'Đã hủy' && $order['status'] !== 'Đã giao')
-                                    <select class="admin-input status-select" data-order-id="{{ $order['id'] }}" aria-label="Trạng thái đơn {{ $order['code'] }}">
-                                        @foreach(['Chờ xác nhận', 'Đang chuẩn bị', 'Đang giao', 'Đã giao', 'Đã hủy'] as $statusCode => $status)
-                                            <option value="{{ $statusCode }}" @selected($order['statusCode'] === $statusCode)>{{ $status }}</option>
-                                        @endforeach
-                                    </select>
-                                    <button type="button" class="admin-button save-order-status">Lưu</button>
-                                @endif
-                                <a class="icon-button" href="{{ route('admin.orders.show', substr($order['code'], 2)) }}" aria-label="Xem chi tiết {{ $order['code'] }}">
-                                    <i class="fa-regular fa-eye"></i>
-                                </a>
+                    @forelse($orders as $order)
+                        <tr style="border-bottom:1px solid #f1f1f1;">
+                            <td style="padding:12px;"><strong>{{ $order['code'] }}</strong></td>
+                            <td style="padding:12px;">{{ $order['date'] }}</td>
+                            <td style="padding:12px;">{{ $order['customer'] }}</td>
+                            <td style="padding:12px;">{{ $order['payment'] }}</td>
+                            <td style="padding:12px;"><strong>{{ $order['total'] }}</strong></td>
+                            <td style="padding:12px;">
+                                <span class="status-pill">{{ $order['status'] }}</span>
+                            </td>
+                            <td style="padding:12px;text-align:right;">
+                                <a class="admin-button" href="{{ route('admin.orders.show', $order['id']) }}">Chi tiết</a>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="7" style="padding:24px;text-align:center;">Chưa có đơn hàng</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
-        <div class="admin-pagination">
-            <span>Hiển thị {{ $orders->firstItem() ?? 0 }}–{{ $orders->lastItem() ?? 0 }} trong {{ $orders->total() }} đơn hàng</span>
-            <div>{{ $orders->links() }}</div>
-        </div>
+
+        <div style="margin-top:18px;">{{ $orders->links() }}</div>
     </section>
 </div>
-<script>
-document.querySelectorAll('.save-order-status').forEach(function (button) {
-    button.addEventListener('click', async function () {
-        const select = button.parentElement.querySelector('.status-select');
-        const response = await fetch('/admin/orders/' + select.dataset.orderId + '/status', {
-            method: 'PATCH',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': @json(csrf_token())
-            },
-            body: JSON.stringify({ status: Number(select.value) })
-        });
-        if (response.ok) window.location.reload();
-        else alert('Không thể cập nhật trạng thái');
-    });
-});
-</script>
 @endsection

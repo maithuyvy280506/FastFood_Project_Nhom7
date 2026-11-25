@@ -2,81 +2,82 @@
 
 @section('content')
 <div class="admin-page">
-    <div class="admin-detail-heading">
-        <h1>CHI TIẾT ĐƠN HÀNG: <span>#{{ $orderCode }}</span></h1>
-        <a class="admin-button admin-button-muted" href="{{ route('admin.orders.index') }}">Quay lại danh sách</a>
-    </div>
+    <section class="admin-panel" style="padding:24px;">
+        <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;">
+            <div>
+                <h1 style="color:#e74c3c;margin-bottom:6px;">CHI TIẾT ĐƠN HÀNG: {{ $orderCode }}</h1>
+                <p style="color:#777;">Ngày đặt: {{ $order->created_at?->format('d/m/Y H:i') }}</p>
+            </div>
+            <span class="status-pill status-pending">{{ $order->statusLabel() }}</span>
+        </div>
 
-    <div class="order-detail-grid">
-        <section class="admin-panel detail-items-panel">
-            <div class="admin-panel-heading"><h2>DANH SÁCH MÓN ĂN CẦN LÀM</h2></div>
-            <div class="admin-table-scroll">
-                <table class="admin-table detail-items-table">
-                    <thead><tr><th>Món ăn &amp; Yêu cầu</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
-                    <tbody>
-                        @foreach($items as $item)
-                            <tr>
-                                <td class="food-name-cell"><img src="{{ $item['image'] }}" alt=""><strong>{{ $item['name'] }}</strong></td>
-                                <td>×{{ $item['quantity'] }}</td>
-                                <td>{{ $item['price'] }}</td>
-                                <td class="accent-text"><strong>{{ $item['price'] }}</strong></td>
-                            </tr>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin-top:18px;">
+            <article class="admin-panel" style="padding:18px;">
+                <h2>THÔNG TIN KHÁCH HÀNG</h2>
+                <p><strong>{{ $order->customer_name }}</strong></p>
+                <p>Số điện thoại: {{ $order->customer_phone }}</p>
+                <p>Địa chỉ: {{ $order->customer_address }}</p>
+                <p>Ghi chú: {{ $order->note ?: 'Không có ghi chú' }}</p>
+            </article>
+
+            <article class="admin-panel" style="padding:18px;">
+                <h2>CẬP NHẬT TRẠNG THÁI</h2>
+                <form id="orderStatusForm">
+                    @csrf
+                    <select id="orderStatus" name="status" style="width:100%;padding:10px;margin:8px 0;">
+                        @foreach([0 => 'Chờ xác nhận', 1 => 'Đang chuẩn bị', 2 => 'Đang giao', 3 => 'Đã giao', 4 => 'Đã hủy'] as $statusCode => $statusLabel)
+                            <option value="{{ $statusCode }}" @selected($order->status === $statusCode)>{{ $statusLabel }}</option>
                         @endforeach
-                    </tbody>
-                </table>
-            </div>
-            <div class="order-total-box">
-                <div><span>Tổng tiền hàng:</span><strong>{{ number_format($order->total_price - $order->shipping_fee, 0, ',', '.') }} đ</strong></div>
-                <div><span>Phí vận chuyển:</span><strong>{{ number_format($order->shipping_fee, 0, ',', '.') }} đ</strong></div>
-                <div class="order-grand-total"><strong>TỔNG THANH TOÁN:</strong><strong>{{ number_format($order->total_price, 0, ',', '.') }} đ</strong></div>
-            </div>
-        </section>
+                    </select>
+                    <button type="submit" class="admin-button">Cập nhật trạng thái</button>
+                </form>
+            </article>
+        </div>
 
-        <aside class="order-detail-aside">
-            <section class="admin-panel detail-info-panel">
-                <div class="admin-panel-heading"><h2>TRẠNG THÁI ĐƠN</h2></div>
-                <dl>
-                    <div><dt>Trạng thái:</dt><dd>
-                        <select id="adminOrderStatus" class="admin-input status-select">
-                            @foreach(['Chờ xác nhận', 'Đang chuẩn bị', 'Đang giao', 'Đã giao', 'Đã hủy'] as $statusIndex => $status)
-                                <option value="{{ $statusIndex }}" @selected($order->status === $statusIndex)>{{ $status }}</option>
-                            @endforeach
-                        </select>
-                    </dd></div>
-                    <div><dt>Ngày đặt:</dt><dd>{{ $order->created_at?->format('d/m/Y H:i') }}</dd></div>
-                    <div><dt>Thanh toán:</dt><dd>{{ $order->method === 2 ? 'Chuyển khoản' : 'Tiền mặt' }}</dd></div>
-                    <div><dt>Ghi chú chung:</dt><dd class="accent-text">{{ $order->note ?: 'Không có ghi chú' }}</dd></div>
-                    <div><dt></dt><dd><button type="button" id="saveAdminOrderStatus" class="admin-button">Cập nhật trạng thái</button></dd></div>
-                </dl>
-            </section>
-            <section class="admin-panel detail-info-panel">
-                <div class="admin-panel-heading"><h2>KHÁCH HÀNG</h2></div>
-                <dl>
-                    <div><dt>Họ tên:</dt><dd>{{ $order->customer_name }}</dd></div>
-                    <div><dt>Điện thoại:</dt><dd class="accent-text">{{ $order->customer_phone }}</dd></div>
-                    <div class="detail-address"><dt>Địa chỉ nhận hàng:</dt><dd>{{ $order->customer_address }}</dd></div>
-                </dl>
-            </section>
-        </aside>
-    </div>
+        <article class="admin-panel" style="padding:18px;margin-top:18px;">
+            <h2>DANH SÁCH MÓN ĂN CẦN LÀM</h2>
+            <div style="display:grid;gap:10px;margin-top:12px;">
+                @forelse($items as $item)
+                    <div style="display:grid;grid-template-columns:80px 1fr auto;align-items:center;gap:12px;border-bottom:1px solid #eee;padding:10px 0;">
+                        @if($item['image'])
+                            <img src="{{ asset($item['image']) }}" alt="{{ $item['name'] }}" style="width:70px;height:70px;object-fit:cover;border-radius:8px;">
+                        @endif
+                        <strong>{{ $item['name'] }}</strong>
+                        <span>x{{ $item['quantity'] }} - {{ $item['price'] }}</span>
+                    </div>
+                @empty
+                    <p>Đơn hàng chưa có món ăn</p>
+                @endforelse
+            </div>
+            <div style="text-align:right;margin-top:18px;">
+                <p>Phí giao hàng: {{ number_format($order->shipping_fee, 0, ',', '.') }} đ</p>
+                <p>Giảm giá: {{ number_format($order->discount_amount, 0, ',', '.') }} đ</p>
+                <strong style="font-size:20px;color:#e74c3c;">Tổng thanh toán: {{ number_format($order->total_price, 0, ',', '.') }} đ</strong>
+            </div>
+        </article>
+    </section>
 </div>
+
 <script>
-document.getElementById('saveAdminOrderStatus')?.addEventListener('click', async function () {
-    const status = document.getElementById('adminOrderStatus').value;
-    const response = await fetch(@json(route('admin.orders.update-status', $order)), {
-        method: 'PATCH',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': @json(csrf_token())
-        },
-        body: JSON.stringify({ status: Number(status) })
+    document.getElementById('orderStatusForm')?.addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const response = await fetch(@json(route('admin.orders.update-status', $order)), {
+            method: 'PATCH',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: JSON.stringify({ status: Number(document.getElementById('orderStatus').value) })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            alert(data.message || 'Không thể cập nhật trạng thái');
+            return;
+        }
+        if (typeof showSiteToast === 'function') showSiteToast('Đã cập nhật: ' + data.statusLabel, 'success');
+        window.location.reload();
     });
-    if (response.ok) {
-        alert('Đã cập nhật trạng thái đơn hàng');
-    } else {
-        alert('Không thể cập nhật trạng thái');
-    }
-});
 </script>
 @endsection

@@ -2,32 +2,30 @@
 
 @section('content')
 <div class="admin-page">
-    <section class="admin-panel table-panel">
-        <div class="admin-list-toolbar">
-            <h1>DANH SÁCH KHÁCH HÀNG</h1>
-            <div class="status-tabs">
-                <button type="button" class="status-tab is-active">Tất cả</button>
-                <button type="button" class="status-tab">Active</button>
-                <button type="button" class="status-tab">Inactive</button>
-            </div>
-        </div>
-        <div class="admin-table-scroll">
-            <table class="admin-table customer-table">
-                <thead><tr><th>STT</th><th>Mã khách hàng</th><th>Họ và tên</th><th>Số điện thoại</th><th>Email</th><th>Địa chỉ</th><th>Trạng thái</th><th>Ngày tạo</th></tr></thead>
+    <section class="admin-panel" style="padding:24px;">
+        <h1 style="color:#e74c3c;">DANH SÁCH KHÁCH HÀNG</h1>
+        <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;margin-top:18px;">
+                <thead>
+                    <tr style="border-bottom:1px solid #eee;text-align:left;">
+                        <th style="padding:12px;">Mã</th>
+                        <th style="padding:12px;">Tên khách hàng</th>
+                        <th style="padding:12px;">Email</th>
+                        <th style="padding:12px;">Số điện thoại</th>
+                        <th style="padding:12px;">Trạng thái</th>
+                    </tr>
+                </thead>
                 <tbody>
                     @forelse($customers as $customer)
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td><strong class="accent-text">C{{ str_pad((string) $loop->iteration, 3, '0', STR_PAD_LEFT) }}</strong></td>
-                            <td><strong>{{ $customer->name }}</strong></td>
-                            <td>{{ $customer->phone ?: '—' }}</td>
-                            <td>{{ $customer->email }}</td>
-                            <td>{{ $customer->address ?: '—' }}</td>
-                            <td><span class="status-pill {{ $customer->status ? 'status-active' : 'status-inactive' }}">{{ $customer->status ? 'Active' : 'Inactive' }}</span></td>
-                            <td>{{ $customer->created_at?->format('Y-m-d') ?? '—' }}</td>
+                        <tr style="border-bottom:1px solid #f1f1f1;">
+                            <td style="padding:12px;">{{ 'KH'.str_pad((string) $customer->id_user, 3, '0', STR_PAD_LEFT) }}</td>
+                            <td style="padding:12px;"><strong>{{ $customer->name }}</strong></td>
+                            <td style="padding:12px;">{{ $customer->email }}</td>
+                            <td style="padding:12px;">{{ $customer->phone ?: '-' }}</td>
+                            <td style="padding:12px;">{{ $customer->status == 1 ? 'Hoạt động' : 'Đã khóa' }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="empty-state">Chưa có dữ liệu khách hàng.</td></tr>
+                        <tr><td colspan="5" style="padding:24px;text-align:center;">Chưa có khách hàng</td></tr>
                     @endforelse
                 </tbody>
             </table>
